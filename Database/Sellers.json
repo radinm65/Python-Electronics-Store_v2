@@ -9,7 +9,9 @@
         "phone_num": "9379499511",
         "address": "Karaj Golha",
         "balance": 0,
-        "selling_products": [1],
+        "selling_products": [
+            1
+        ],
         "sold": [
             {
                 "product_id": 1,
@@ -66,7 +68,7 @@
         "age": "25",
         "phone_num": "0945678901",
         "address": "Tabriz Azadi Square",
-        "balance": 18000,
+        "balance": 51000,
         "selling_products": [
             4
         ],
@@ -74,6 +76,10 @@
             {
                 "product_id": 4,
                 "date": "2026-08-20T14:10:00"
+            },
+            {
+                "product_id": 4,
+                "date": "2026-09-03T16:18:09.556494"
             }
         ]
     },

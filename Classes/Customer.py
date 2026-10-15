@@ -112,7 +112,7 @@ class Customer(User):
                 sellers = FileCommands.get_file_data("./Database/Sellers.json")
                 purchase_date = datetime.today().isoformat()
                 total_price = 0
-                # اول چک موجودی (آیتم‌های حذف‌شده/نامعتبر نادیده گرفته می‌شوند)
+                
                 for product_id in customer["cart"]:
                     product = Product.get_product_byID(product_id)
                     if product is None:

@@ -1,5 +1,6 @@
 from Classes.Employee import Employee
 from Classes.Ticket import Ticket
+from Classes.Product import Product
 from Classes.Phone import Phone
 from Classes.Laptop import Laptop
 from Classes.Camera import Camera
@@ -45,6 +46,13 @@ class SellerEmployee(Employee):
 
         FileCommands.delete_data("./Database/UnapprovedProducts.json", product_id)
 
+        sellers = SellerEmployee.get_sellers()
+        for seller in sellers:
+            if seller["id"] == found["seller_id"]:
+                seller["selling_products"].append(product_id)
+                SellerEmployee.save_sellers(sellers)
+                break
+
         if "battery_mah" in found:
             return FileCommands.add_data("./Database/ApprovedPhones.json", found)
         elif "cpu" in found:
@@ -67,6 +75,18 @@ class SellerEmployee(Employee):
 
     @staticmethod
     def remove_product(product_id):
+        product = Product.get_product_byID(product_id)
+        if product is None:
+            raise ValueError("ID not found.")
+
+        sellers = SellerEmployee.get_sellers()
+        for seller in sellers:
+            if seller["id"] == product["seller_id"]:
+                if product_id in seller["selling_products"]:
+                    seller["selling_products"].remove(product_id)
+                    SellerEmployee.save_sellers(sellers)
+                break
+
         try:
             return Phone.remove_product(product_id)
         except ValueError:

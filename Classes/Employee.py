@@ -5,7 +5,10 @@ from datetime import datetime
 
 class Employee(Person):
     def __init__(self):
+        super().__init__()
         self.date_hired = datetime.today()
+        self.__bank_account_num = None
+        self.__salary = None
 
     @property
     def bank_account_num(self):

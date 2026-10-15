@@ -4,6 +4,7 @@ from Classes.Ticket import Ticket
 
 class User(Person):
     def __init__(self):
+        super().__init__()
         self.balance = 0
 
     @property

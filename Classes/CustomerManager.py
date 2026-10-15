@@ -4,6 +4,8 @@ from Classes.CustomerEmployee import CustomerEmployee
 
 
 class CustomerManager(Manager):
+    def __init__(self):
+        super().__init__()
 
     def raise_salary(customers_employee_id, amount):
 

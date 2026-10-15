@@ -5,10 +5,10 @@ from FileCommands import FileCommands
 
 class Ticket:
 
-    def __init__(self, from_id):
+    def __init__(self):
         self.id = ticket_id_generator.next_id()
-        self.from_id = from_id
-        self.response = ""
+        self.from_id = None
+        self.response = None
         self.__date_created = datetime.today()
 
     @property
@@ -118,8 +118,9 @@ class Ticket:
 
     @staticmethod
     def from_dict(ticket_dict):
-        ticket = Ticket(ticket_dict["from_id"])
+        ticket = Ticket()
         ticket.id = ticket_dict["id"]
+        ticket.from_id = ticket_dict["from_id"]
         ticket.from_name = ticket_dict["from_name"]
         ticket.request = ticket_dict["request"]
         ticket.sender_type = ticket_dict["sender_type"]

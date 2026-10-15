@@ -3,6 +3,8 @@ from abc import abstractmethod
 
 
 class Manager(Person):
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     @abstractmethod

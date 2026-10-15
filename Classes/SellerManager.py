@@ -4,6 +4,8 @@ from FileCommands import FileCommands
 
 
 class SellerManager(Manager):
+    def __init__(self):
+        super().__init__()
 
     def raise_salary(seller_employee_id, amount):
 

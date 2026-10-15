@@ -9,8 +9,8 @@ class Seller(User):
     def __init__(self):
         super().__init__()
         self.id = seller_id_generator.next_id()
-        self.selling_products = []
-        self.sold = []
+        self.selling_products = None
+        self.sold = None
 
     def save(self):
         new_seller = {

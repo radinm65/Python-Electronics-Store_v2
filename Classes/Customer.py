@@ -10,9 +10,9 @@ class Customer(User):
     def __init__(self):
         super().__init__()
         self.id = customer_id_generator.next_id()
-        self.cart = []
-        self.favorites = []
-        self.bought = []
+        self.cart = None
+        self.favorites = None
+        self.bought = None
 
     def save(self):
         new_customer = {

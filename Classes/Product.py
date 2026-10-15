@@ -6,9 +6,9 @@ from IDGenerator import product_id_generator
 
 class Product(ABC):
 
-    def __init__(self, seller_id, product_id=None):
-        self.id = product_id if product_id is not None else product_id_generator.next_id()
-        self.seller_id = seller_id
+    def __init__(self):
+        self.id = product_id_generator.next_id()
+        self.seller_id = None
         self.__date_created = datetime.today()
 
     @property

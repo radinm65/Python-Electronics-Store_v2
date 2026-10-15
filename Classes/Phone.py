@@ -4,8 +4,8 @@ from FileCommands import FileCommands
 
 class Phone(Product):
 
-    def __init__(self, seller_id, product_id=None):
-        super().__init__(seller_id, product_id)
+    def __init__(self):
+        super().__init__()
         self.__ram_gb = None
         self.__storage_gb = None
         self.__battery_mah = None
@@ -59,6 +59,7 @@ class Phone(Product):
             raise ValueError("Battery capacity (mAh) must be between 500 and 10000.")
         self.__battery_mah = new_battery_mah
 
+
     def extra_fields(self):
         return {
             "ram_gb": self.ram_gb,
@@ -66,33 +67,11 @@ class Phone(Product):
             "battery_mah": self.battery_mah,
         }
 
-    def input_extra_fields(self):
-        self.ram_gb = input("\nEnter RAM (GB):\n")
-        self.storage_gb = input("\nEnter Storage (GB):\n")
-        self.battery_mah = input("\nEnter Battery Capacity (mAh):\n")
-
-    def edit_extra_field(self):
-        print(
-            "\nWhich field do you want to edit?\n"
-            "1- RAM\n"
-            "2- Storage\n"
-            "3- Battery Capacity\n"
-        )
-        choice = input("Enter your choice:\n")
-
-        match choice:
-            case "1":
-                self.ram_gb = input("Enter new RAM (GB):\n")
-            case "2":
-                self.storage_gb = input("Enter new Storage (GB):\n")
-            case "3":
-                self.battery_mah = input("Enter new Battery Capacity (mAh):\n")
-            case _:
-                raise ValueError("Invalid choice.")
-
     @classmethod
     def from_dict(cls, product_data):
-        phone = cls(product_data["seller_id"], product_data["id"])
+        phone = cls()
+        phone.id = product_data["id"]
+        phone.seller_id = product_data["seller_id"]
         phone.name = product_data["name"]
         phone.brand = product_data["brand"]
         phone.price = product_data["price"]

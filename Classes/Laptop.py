@@ -4,8 +4,8 @@ from FileCommands import FileCommands
 
 class Laptop(Product):
 
-    def __init__(self, seller_id, product_id=None):
-        super().__init__(seller_id, product_id)
+    def __init__(self):
+        super().__init__()
         self.__ram_gb = None
         self.__storage_gb = None
         self.__cpu = None
@@ -61,33 +61,11 @@ class Laptop(Product):
             "cpu": self.cpu,
         }
 
-    def input_extra_fields(self):
-        self.ram_gb = input("\nEnter RAM (GB):\n")
-        self.storage_gb = input("\nEnter Storage (GB):\n")
-        self.cpu = input("\nEnter CPU:\n")
-
-    def edit_extra_field(self):
-        print(
-            "\nWhich field do you want to edit?\n"
-            "1- RAM\n"
-            "2- Storage\n"
-            "3- CPU\n"
-        )
-        choice = input("Enter your choice:\n")
-
-        match choice:
-            case "1":
-                self.ram_gb = input("Enter new RAM (GB):\n")
-            case "2":
-                self.storage_gb = input("Enter new Storage (GB):\n")
-            case "3":
-                self.cpu = input("Enter new CPU:\n")
-            case _:
-                raise ValueError("Invalid choice.")
-
     @classmethod
     def from_dict(cls, product_data):
-        laptop = cls(product_data["seller_id"], product_data["id"])
+        laptop = cls()
+        laptop.id = product_data["id"]
+        laptop.seller_id = product_data["seller_id"]
         laptop.name = product_data["name"]
         laptop.brand = product_data["brand"]
         laptop.price = product_data["price"]

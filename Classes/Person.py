@@ -5,6 +5,14 @@ from FileCommands import FileCommands
 
 
 class Person(ABC):
+    def __init__(self):
+        self.__firstname = None
+        self.__lastname = None
+        self.__username = None
+        self.__password = None
+        self.__age = None
+        self.__phone_num = None
+        self.__address = None
 
     @property
     def firstname(self):

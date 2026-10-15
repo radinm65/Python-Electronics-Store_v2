@@ -442,7 +442,8 @@ def login_user(username, password, usertype, managers):
                 signedup, new_user = signup_user(usertype)
 
                 if signedup:
-                    user_data["panel"](new_user)
+                    if usertype == "customer":
+                        user_data["panel"](new_user)
                     return True
 
             else:
@@ -468,8 +469,13 @@ def signup_user(signup_type):
 
         if signup_type == "customer":
             user = Customer()
+            user.cart = []
+            user.favorites = []
+            user.bought = []
         elif signup_type == "seller":
             user = Seller()
+            user.selling_products = []
+            user.sold = []
 
         user.firstname = firstname
 
@@ -664,7 +670,9 @@ def add_cart_to_favorites(customer):
 
 def submit_ticket(user, sender_type):
     try:
-        new_ticket = Ticket(user.id)
+        new_ticket = Ticket()
+        new_ticket.from_id = user.id
+        new_ticket.response = ""
         new_ticket.from_name = user.firstname
         new_ticket.request = input("What is the problem?\n")
         new_ticket.sender_type = sender_type
@@ -720,6 +728,82 @@ def print_account_info(user):
     print(user_obj)
 
 
+def input_product_extra_fields(product):
+    if type(product) == Phone:
+        product.ram_gb = input("\nEnter RAM (GB):\n")
+        product.storage_gb = input("\nEnter Storage (GB):\n")
+        product.battery_mah = input("\nEnter Battery Capacity (mAh):\n")
+
+    elif type(product) == Laptop:
+        product.ram_gb = input("\nEnter RAM (GB):\n")
+        product.storage_gb = input("\nEnter Storage (GB):\n")
+        product.cpu = input("\nEnter CPU:\n")
+
+    elif type(product) == Camera:
+        product.resolution_mp = input("\nEnter Resolution (MP):\n")
+        product.zoom_factor = input("\nEnter Zoom Factor (e.g. 5 for 5x):\n")
+        product.sensor_type = input("\nEnter Sensor Type (e.g. CMOS, CCD):\n")
+
+
+def edit_product_extra_field(product):
+    if type(product) == Phone:
+        print(
+            "\nWhich field do you want to edit?\n"
+            "1- RAM\n"
+            "2- Storage\n"
+            "3- Battery Capacity\n"
+        )
+        choice = input("Enter your choice:\n")
+
+        match choice:
+            case "1":
+                product.ram_gb = input("Enter new RAM (GB):\n")
+            case "2":
+                product.storage_gb = input("Enter new Storage (GB):\n")
+            case "3":
+                product.battery_mah = input("Enter new Battery Capacity (mAh):\n")
+            case _:
+                raise ValueError("Invalid choice.")
+
+    elif type(product) == Laptop:
+        print(
+            "\nWhich field do you want to edit?\n"
+            "1- RAM\n"
+            "2- Storage\n"
+            "3- CPU\n"
+        )
+        choice = input("Enter your choice:\n")
+
+        match choice:
+            case "1":
+                product.ram_gb = input("Enter new RAM (GB):\n")
+            case "2":
+                product.storage_gb = input("Enter new Storage (GB):\n")
+            case "3":
+                product.cpu = input("Enter new CPU:\n")
+            case _:
+                raise ValueError("Invalid choice.")
+
+    elif type(product) == Camera:
+        print(
+            "\nWhich field do you want to edit?\n"
+            "1- Resolution\n"
+            "2- Zoom Factor\n"
+            "3- Sensor Type\n"
+        )
+        choice = input("Enter your choice:\n")
+
+        match choice:
+            case "1":
+                product.resolution_mp = input("Enter new Resolution (MP):\n")
+            case "2":
+                product.zoom_factor = input("Enter new Zoom Factor:\n")
+            case "3":
+                product.sensor_type = input("Enter new Sensor Type:\n")
+            case _:
+                raise ValueError("Invalid choice.")
+
+
 def make_product(seller):
     while True:
         try:
@@ -733,14 +817,16 @@ def make_product(seller):
                 break
 
             if category_choice == "1":
-                new_product = Phone(seller.id)
+                new_product = Phone()
             elif category_choice == "2":
-                new_product = Laptop(seller.id)
+                new_product = Laptop()
             elif category_choice == "3":
-                new_product = Camera(seller.id)
+                new_product = Camera()
             else:
                 print_error("Please only choose from options.")
                 continue
+
+            new_product.seller_id = seller.id
 
             new_product.name = input("\nEnter name of product:\n")
 
@@ -748,7 +834,7 @@ def make_product(seller):
 
             new_product.price = input("\nEnter price:\n")
 
-            new_product.input_extra_fields()
+            input_product_extra_fields(new_product)
 
             new_product.save()
 
@@ -787,6 +873,8 @@ def see_seller_selling_products(seller):
         seller_json = SellerEmployee.get_seller_byID(seller.id)
         for selling_product_id in seller_json["selling_products"]:
             product_data = Product.get_product_byID(selling_product_id)
+            if product_data is None:
+                continue
             if "battery_mah" in product_data:
                 product_obj = Phone.from_dict(product_data)
             elif "cpu" in product_data:
@@ -882,7 +970,7 @@ def edit_product(seller=None):
                     product.price = input("Enter new price:\n")
 
                 case "4":
-                    product.edit_extra_field()
+                    edit_product_extra_field(product)
 
                 case _:
                     print_error("Invalid choice.\n")
@@ -1047,9 +1135,19 @@ def approve_product_or_seller(product_or_seller):
 def remove_seller_or_product(product_or_seller):
     while True:
         try:
-            product_or_seller_id = int(
-                input(f"Enter {product_or_seller} ID to remove:\n")
+            product_or_seller_id = input(
+                f"Enter {product_or_seller} ID to remove (Enter 'e' to exit):\n"
             )
+            if product_or_seller_id.lower() == "e":
+                print_successful(f"Exited removing {product_or_seller}!\n")
+                break
+
+            if not product_or_seller_id.isdigit():
+                print_error("ID must be a number.\n")
+                continue
+
+            product_or_seller_id = int(product_or_seller_id)
+
             if product_or_seller == "seller":
                 removed = SellerEmployee.remove_seller(product_or_seller_id)
             elif product_or_seller == "product":
@@ -1061,7 +1159,7 @@ def remove_seller_or_product(product_or_seller):
                 if again != "1":
                     break
         except ValueError as e:
-            print_error(e, end="\n\n")
+            print_error(e)
 
 
 def show_all_products():

@@ -4,8 +4,8 @@ from FileCommands import FileCommands
 
 class Camera(Product):
 
-    def __init__(self, seller_id, product_id=None):
-        super().__init__(seller_id, product_id)
+    def __init__(self):
+        super().__init__()
         self.__resolution_mp = None
         self.__zoom_factor = None
         self.__sensor_type = None
@@ -54,6 +54,7 @@ class Camera(Product):
             raise ValueError("Sensor type should be longer than 2 characters.")
         self.__sensor_type = new_sensor_type
 
+
     def extra_fields(self):
         return {
             "resolution_mp": self.resolution_mp,
@@ -61,33 +62,11 @@ class Camera(Product):
             "sensor_type": self.sensor_type,
         }
 
-    def input_extra_fields(self):
-        self.resolution_mp = input("\nEnter Resolution (MP):\n")
-        self.zoom_factor = input("\nEnter Zoom Factor (e.g. 5 for 5x):\n")
-        self.sensor_type = input("\nEnter Sensor Type (e.g. CMOS, CCD):\n")
-
-    def edit_extra_field(self):
-        print(
-            "\nWhich field do you want to edit?\n"
-            "1- Resolution\n"
-            "2- Zoom Factor\n"
-            "3- Sensor Type\n"
-        )
-        choice = input("Enter your choice:\n")
-
-        match choice:
-            case "1":
-                self.resolution_mp = input("Enter new Resolution (MP):\n")
-            case "2":
-                self.zoom_factor = input("Enter new Zoom Factor:\n")
-            case "3":
-                self.sensor_type = input("Enter new Sensor Type:\n")
-            case _:
-                raise ValueError("Invalid choice.")
-
     @classmethod
     def from_dict(cls, product_data):
-        camera = cls(product_data["seller_id"], product_data["id"])
+        camera = cls()
+        camera.id = product_data["id"]
+        camera.seller_id = product_data["seller_id"]
         camera.name = product_data["name"]
         camera.brand = product_data["brand"]
         camera.price = product_data["price"]

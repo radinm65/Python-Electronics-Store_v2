@@ -1,23 +1,23 @@
 import mysql.connector
 
 
-class mysqlcommands:
+class MySQLcommands:
     _connection = None
 
     @staticmethod
     def connect_to_mysql():
         if (
-            mysqlcommands._connection is None
-            or mysqlcommands._connection.is_connected() == False
+            MySQLcommands._connection is None
+            or MySQLcommands._connection.is_connected() == False
         ):
-            mysqlcommands._connection = mysql.connector.connect(
+            MySQLcommands._connection = mysql.connector.connect(
                 host="localhost", user="root", port=3306
             )
-        return mysqlcommands._connection
+        return MySQLcommands._connection
 
     @staticmethod
     def initialize_database():
-        cursor = mysqlcommands._connection.cursor()
+        cursor = MySQLcommands._connection.cursor()
         cursor.execute("CREATE DATABASE IF NOT EXISTS electronic_store")
         cursor.execute("USE electronic_store")
 
@@ -219,20 +219,27 @@ class mysqlcommands:
         """
         )
 
-        mysqlcommands._connection.commit()
+        MySQLcommands._connection.commit()
 
     @staticmethod
     def execute_query(query, params=None):
-        cursor = mysqlcommands._connection.cursor()
-        cursor.execute(query, params)
-        mysqlcommands._connection.commit()
-        return cursor
+        cursor = MySQLcommands._connection.cursor()
+
+        try:
+            cursor.execute(query, params)
+            MySQLcommands._connection.commit()
+            return cursor
+
+        except mysql.connector.Error:
+            MySQLcommands._connection.rollback()
+            cursor.close()
+            raise ValueError("Database query failed.")
 
     @staticmethod
     def close_connection():
         if (
-            mysqlcommands._connection is not None
-            and mysqlcommands._connection.is_connected()
+            MySQLcommands._connection is not None
+            and MySQLcommands._connection.is_connected()
         ):
-            mysqlcommands._connection.close()
-            mysqlcommands._connection = None
+            MySQLcommands._connection.close()
+            MySQLcommands._connection = None

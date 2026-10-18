@@ -29,12 +29,14 @@ class MySQLProgramQueries:
         )
 
         cursor = MySQLcommands.execute_query(query, params)
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
-    
+    @staticmethod
     def get_pending_products_query(seller_id):
         query = """
             SELECT
@@ -68,26 +70,28 @@ class MySQLProgramQueries:
         
         cursor = MySQLcommands.execute_query(query, (seller_id,))
         try:
-            unapproved_products = cursor.fetchall()
-            return unapproved_products
+            pending_products = cursor.fetchall()
+            return pending_products
         finally:
             cursor.close()
             
             
             
-    def delete_seller_product_query(product_id):
+    @staticmethod
+    def delete_seller_product_query(product_id, seller_id):
         query = """
             DELETE FROM PRODUCTS
             WHERE id = %s
+                AND seller_id = %s;
         """
         
-        cursor = MySQLcommands.execute_query(query, (product_id,))
-        deleted = cursor.rowcount > 0
-        cursor.close()
+        cursor = MySQLcommands.execute_query(query, (product_id, seller_id))
         
-        return deleted
-    
-    
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
+        
     
  # Customer queries /////////////////////////////
     
@@ -115,12 +119,15 @@ class MySQLProgramQueries:
         )
 
         cursor = MySQLcommands.execute_query(query, params)
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
-    def change_customer_balance_query(amount, customer_id):
+    @staticmethod
+    def set_customer_balance_query(amount, customer_id):
         query = """
             UPDATE customers
             SET balance = %s
@@ -128,11 +135,14 @@ class MySQLProgramQueries:
         """
                 
         cursor = MySQLcommands.execute_query(query, (amount, customer_id))
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
+    @staticmethod
     def add_cart_item_query(customer_id, product_id):
         query = """
             INSERT INTO cart_items (customer_id, product_id)
@@ -140,35 +150,44 @@ class MySQLProgramQueries:
         """
         
         cursor = MySQLcommands.execute_query(query, (customer_id, product_id))
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
+    @staticmethod
     def add_many_cart_item_query(items):
         query = """
             INSERT INTO cart_items (customer_id, product_id)
             VALUES (%s, %s)
         """
         
-        cursor = MySQLcommands.execute_many_query(query, items)
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        cursor = MySQLcommands.execute_many_queries(query, items)
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
-    def remove_customer_cart_item_query(cart_item_id):
+    @staticmethod
+    def remove_customer_cart_item_query(cart_item_id, customer_id):
         query = """
             DELETE FROM cart_items
             WHERE id = %s
+                AND customer_id = %s
         """
         
-        cursor = MySQLcommands.execute_query(query, (cart_item_id,))
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        cursor = MySQLcommands.execute_query(query, (cart_item_id, customer_id))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
+    @staticmethod
     def remove_all_customer_cart_items_query(customer_id):
         query = """
             DELETE FROM cart_items
@@ -176,11 +195,13 @@ class MySQLProgramQueries:
         """
                 
         cursor = MySQLcommands.execute_query(query, (customer_id,))
-        removed = cursor.rowcount > 0
-        cursor.close()
-        return removed
+        try:
+            return cursor.rowcount > 0
+        finally: 
+            cursor.close()
     
     
+    @staticmethod
     def get_customer_cart_items(customer_id):
         query = """
             SELECT * FROM cart_items
@@ -190,24 +211,27 @@ class MySQLProgramQueries:
         cursor = MySQLcommands.execute_query(query, (customer_id,))
         
         try:
-            unapproved_products = cursor.fetchall()
-            return unapproved_products
+            cart_items = cursor.fetchall()
+            return cart_items
         finally:
             cursor.close()
             
     
+    @staticmethod
     def add_cart_items_to_sales_query(cart_items):
         query = """
-            INSERT INTO sales (product_id, customer_id)
+            INSERT INTO sales (customer_id, product_id)
             Values (%s, %s)
         """
         
         cursor = MySQLcommands.execute_many_queries(query, cart_items)
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
+    @staticmethod
     def add_customer_favorites_query(customer_id, product_id):
         query = """
             INSERT INTO favorites (customer_id, product_id)
@@ -215,23 +239,28 @@ class MySQLProgramQueries:
         """
         
         cursor = MySQLcommands.execute_query(query, (customer_id, product_id))
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
-    def remove_customer_favorite_query(favorite_id):
+    @staticmethod
+    def remove_customer_favorite_query(favorite_id, customer_id):
         query = """
             DELETE FROM favorites
             WHERE id = %s
+                AND customer_id = %s
         """
         
-        cursor = MySQLcommands.execute_query(query, (favorite_id,))
-        added = cursor.rowcount > 0
-        cursor.close()
-        return added
+        cursor = MySQLcommands.execute_query(query, (favorite_id, customer_id))
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
+    @staticmethod
     def get_customer_favorites(customer_id):
         query = """
             SELECT * FROM favorites
@@ -241,12 +270,13 @@ class MySQLProgramQueries:
         cursor = MySQLcommands.execute_query(query, (customer_id,))
             
         try:
-            unapproved_products = cursor.fetchall()
-            return unapproved_products
+            favorites = cursor.fetchall()
+            return favorites
         finally:
             cursor.close()
     
     
+    @staticmethod
     def remove_all_customer_favorites_query(customer_id):
         query = """
             DELETE FROM favorites
@@ -254,9 +284,10 @@ class MySQLProgramQueries:
         """
                 
         cursor = MySQLcommands.execute_query(query, (customer_id,))
-        removed = cursor.rowcount > 0
-        cursor.close()
-        return removed
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
             
     
 

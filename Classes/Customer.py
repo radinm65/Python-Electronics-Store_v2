@@ -147,7 +147,7 @@ class Customer(User):
 
 
     @staticmethod
-    def add_cart_to_favorites(customer_id):
+    def add_favorites_to_cart(customer_id):
 
         customers = CustomerEmployee.get_customers()
 
@@ -173,7 +173,7 @@ class Customer(User):
         return False
 
     @staticmethod
-    def add_to_balance(customer_id, new_balance):
+    def change_balance(customer_id, new_balance):
 
         customers = CustomerEmployee.get_customers()
 

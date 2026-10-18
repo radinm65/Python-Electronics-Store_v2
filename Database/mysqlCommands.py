@@ -223,7 +223,7 @@ class MySQLcommands:
 
     @staticmethod
     def execute_query(query, params=None):
-        cursor = MySQLcommands._connection.cursor()
+        cursor = MySQLcommands._connection.cursor(dictionary=True)
 
         try:
             cursor.execute(query, params)
@@ -233,7 +233,21 @@ class MySQLcommands:
         except mysql.connector.Error:
             MySQLcommands._connection.rollback()
             cursor.close()
-            raise ValueError("Database query failed.")
+            raise 
+        
+    @staticmethod
+    def execute_many_queries(query, data_list):
+        cursor = MySQLcommands._connection.cursor(dictionary=True)
+
+        try:
+            cursor.executemany(query, data_list)
+            MySQLcommands._connection.commit()
+            return cursor
+
+        except mysql.connector.Error:
+            MySQLcommands._connection.rollback()
+            cursor.close()
+            raise 
 
     @staticmethod
     def close_connection():

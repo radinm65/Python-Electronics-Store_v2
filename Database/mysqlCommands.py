@@ -138,10 +138,12 @@ class MySQLcommands:
                     product_id INT NOT NULL,
                     
                     FOREIGN KEY (customer_id)  
-                        REFERENCES customers(id),
+                        REFERENCES customers(id)
+                        ON DELETE CASCADE,
                         
                     FOREIGN KEY ( product_id)  
-                        REFERENCES products(id),
+                        REFERENCES products(id)
+                        ON DELETE CASCADE,
                         
                     UNIQUE (customer_id, product_id)
                 )
@@ -156,10 +158,12 @@ class MySQLcommands:
                     product_id INT NOT NULL,
                     
                     FOREIGN KEY (customer_id)  
-                        REFERENCES customers(id),
+                        REFERENCES customers(id)
+                        ON DELETE CASCADE,
                         
                     FOREIGN KEY (product_id)  
-                        REFERENCES products(id),
+                        REFERENCES products(id)
+                        ON DELETE CASCADE,
                         
                     UNIQUE (customer_id, product_id)
                 )
@@ -196,7 +200,7 @@ class MySQLcommands:
                     address VARCHAR(50) NOT NULL,
                     bank_account_num VARCHAR(16) NOT NULL,
                     salary INT NOT NULL,
-                    role ENUM('customer_support', 'seller_manager') NOT NULL,
+                    role ENUM('customer_employee', 'seller_employee') NOT NULL,
                     date_hired TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -206,21 +210,15 @@ class MySQLcommands:
                 """
                 CREATE TABLE IF NOT EXISTS tickets (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    customer_id INT NULL,
-                    seller_id INT NULL,
+                    from_name VARCHAR(20) NOT NULL,
+                    from_id INT NOT NULL,
+                    sender_type ENUM('customer', 'seller') NOT NULL,
                     request TEXT NOT NULL,
                     response TEXT NOT NULL DEFAULT '',
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                    FOREIGN KEY (customer_id) REFERENCES customers(id),
-                    FOREIGN KEY (seller_id) REFERENCES sellers(id),
-
-                    CHECK (
-                        (customer_id IS NULL AND seller_id IS NOT NULL)
-                        OR
-                        (customer_id IS NOT NULL AND seller_id IS NULL)
-                    )
-                )
+                    
+                    INDEX idx_sender (sender_type, from_id)
+                );
             """
             )
 

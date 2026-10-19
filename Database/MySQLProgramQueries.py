@@ -34,6 +34,70 @@ class MySQLProgramQueries:
             return cursor.rowcount > 0
         finally:
             cursor.close()
+            
+            
+            
+    @staticmethod
+    def get_sellers_query(status):
+        query = """
+            SELECT * from sellers
+            WHERE status = %s
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (status,))
+        
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            
+            
+    @staticmethod
+    def get_approved_seller_query(seller_id):
+        query = """
+            SELECT * from sellers
+            WHERE id = %s
+                AND status = %s
+        """
+        cursor = MySQLcommands.execute_query(query, (seller_id, "approved"))
+        
+        try:
+            return cursor.fetchone()
+        finally:
+            cursor.close()
+    
+            
+    @staticmethod
+    def approve_seller_query(seller_id):
+        query = """
+            UPDATE sellers
+            SET status = "approved"
+            WHERE id = %s 
+                AND status = "pending"
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (seller_id,))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
+    
+            
+    @staticmethod
+    def delete_seller_query(seller_id):
+        query = """
+            DELETE FROM sellers
+            WHERE id = %s 
+                AND status = "approved"
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (seller_id,))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
     
     
     @staticmethod
@@ -94,9 +158,39 @@ class MySQLProgramQueries:
         
     
  # Customer queries /////////////////////////////
+ 
+    @staticmethod
+    def get_customers_query():
+        query = """
+            SELECT * FROM customers
+        """
+        
+        cursor = MySQLcommands.execute_query(query)
+        
+        try:
+            customers = cursor.fetchall()
+            return customers
+        finally:
+            cursor.close()
+ 
+ 
+    @staticmethod
+    def delete_customer_query(customer_id):
+        query = """
+            DELETE FROM customers
+            WHERE id = %s
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (customer_id,))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
+        
     
     @staticmethod
-    def save_customer_query(
+    def add_customer_query(
         firstname, lastname, username, password, age, phone_num, address, balance
     ):
         query = """
@@ -172,7 +266,7 @@ class MySQLProgramQueries:
     
     
     @staticmethod
-    def remove_customer_cart_item_query(cart_item_id, customer_id):
+    def delete_customer_cart_item_query(cart_item_id, customer_id):
         query = """
             DELETE FROM cart_items
             WHERE id = %s
@@ -188,7 +282,7 @@ class MySQLProgramQueries:
     
     
     @staticmethod
-    def remove_all_customer_cart_items_query(customer_id):
+    def delete_all_customer_cart_items_query(customer_id):
         query = """
             DELETE FROM cart_items
             WHERE customer_id = %s
@@ -246,7 +340,7 @@ class MySQLProgramQueries:
     
     
     @staticmethod
-    def remove_customer_favorite_query(favorite_id, customer_id):
+    def delete_customer_favorite_query(favorite_id, customer_id):
         query = """
             DELETE FROM favorites
             WHERE id = %s
@@ -277,13 +371,104 @@ class MySQLProgramQueries:
     
     
     @staticmethod
-    def remove_all_customer_favorites_query(customer_id):
+    def delete_all_customer_favorites_query(customer_id):
         query = """
             DELETE FROM favorites
             WHERE customer_id = %s
         """
                 
         cursor = MySQLcommands.execute_query(query, (customer_id,))
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
+            
+            
+    # Tickets queries /////////////////////////////////
+    
+    @staticmethod
+    def get_user_tickets(user_id_type):
+        allowed_columns = {
+            "customer_id",
+            "seller_id"
+        }
+
+        if user_id_type not in allowed_columns:
+            raise ValueError("Invalid user ID column")
+    
+        query = f"""
+            SELECT * from tickets
+            WHERE {user_id_type} IS NOT NULL
+        """
+        
+        cursor = MySQLcommands.execute_query(query)
+        
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+    
+    
+    @staticmethod
+    def answer_ticket(ticket_id, answer):
+        query = """
+            UPDATE tickets
+            Set response = %s
+            WHERE id = %s 
+                AND response = ''
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (answer, ticket_id))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()
+    
+    
+    # Product Queries ////////////////////////////
+    
+    @staticmethod
+    def get_unapproved_products_query():
+        query = """
+            SELECT * from products
+            WHERE status = "pending"
+        """
+        
+        cursor = MySQLcommands.execute_query(query)
+        
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()   
+    
+    
+    @staticmethod
+    def approve_product_query(product_id):
+        query = """
+            UPDATE products
+            SET status = "approved"
+            WHERE id = %s 
+                AND status = "pending"
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (product_id,))
+        
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()  
+            
+    @staticmethod
+    def delete_product_query(product_id):
+        query = """
+            DELETE FROM products
+            WHERE id = %s 
+                AND status = "approved"
+        """
+        
+        cursor = MySQLcommands.execute_query(query, (product_id,))
+        
         try:
             return cursor.rowcount > 0
         finally:
@@ -307,3 +492,4 @@ class MySQLProgramQueries:
             
     
         
+    

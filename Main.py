@@ -12,6 +12,7 @@ from Classes.Laptop import Laptop
 from Classes.Camera import Camera
 from Classes.Ticket import Ticket
 from Report import Report
+from Database.MySQLCommands import MySQLcommands
 
 
 def print_error(message):
@@ -230,9 +231,13 @@ def fire_employee(employee_type):
         if employee_type == "customer":
             if CustomerManager.fire_employee(emp_id):
                 print_successful("Customer Employee is Fired!")
+            else:
+                print_error("No Such ID Was Found")
         elif employee_type == "seller":
             if SellerManager.fire_employee(emp_id):
                 print_successful("Seller Employee is Fired!")
+            else:
+                print_error("No Such ID Was Found")
     except Exception as e:
         print_error(e)
 
@@ -240,9 +245,9 @@ def fire_employee(employee_type):
 def give_employee_raise(employee_type):
     try:
         success = False
-        emp_id = int(input("\nEnter Customer Employee ID to Give Raise:\n"))
+        emp_id = int(input(f"\nEnter {employee_type} Employee ID to Give Raise:\n"))
         if employee_type == "customer":
-            if CustomerManager.check_employee_byID(emp_id):
+            if CustomerManager.get_customer_employee_byID(emp_id):
                 salary_raise = int(input("How much raise?\n"))
                 CustomerManager.raise_salary(emp_id, salary_raise)
                 success = True
@@ -251,7 +256,7 @@ def give_employee_raise(employee_type):
 
         elif employee_type == "seller":
 
-            if SellerManager.check_employee_byID(emp_id):
+            if SellerManager.get_seller_employee_byID(emp_id):
                 salary_raise = int(input("How much raise?\n"))
                 SellerManager.raise_salary(emp_id, salary_raise)
                 success = True
@@ -361,25 +366,21 @@ def login_user(username, password, usertype, managers):
 
     users = {
         "customer": {
-            "file": "./Database/Customers.json",
             "class": Customer,
             "panel": customers_panel,
             "can_signup": True,
         },
         "seller": {
-            "file": "./Database/Sellers.json",
             "class": Seller,
             "panel": sellers_panel,
             "can_signup": True,
         },
         "customer_employee": {
-            "file": "./Database/CustomerEmployees.json",
             "class": CustomerEmployee,
             "panel": customer_employee_panel,
             "can_signup": False,
         },
         "seller_employee": {
-            "file": "./Database/SellerEmployees.json",
             "class": SellerEmployee,
             "panel": seller_employee_panel,
             "can_signup": False,
@@ -415,7 +416,7 @@ def login_user(username, password, usertype, managers):
             print_error("Wrong Username or Password.")
             return False
 
-        login, user = Person.check_login(user_data["file"], username, password)
+        login, user = Person.check_login(username, password, usertype)
 
         if login:
 
@@ -469,13 +470,8 @@ def signup_user(signup_type):
 
         if signup_type == "customer":
             user = Customer()
-            user.cart = []
-            user.favorites = []
-            user.bought = []
         elif signup_type == "seller":
             user = Seller()
-            user.selling_products = []
-            user.sold = []
 
         user.firstname = firstname
 
@@ -505,6 +501,10 @@ def signup_user(signup_type):
         user.save()
 
         if signup_type == "customer":
+            for customer in CustomerEmployee.get_customers():
+                if customer["username"] == username:
+                    user = Customer.from_dict(customer)
+
             print_successful("Customer Signed up Successfully!")
 
         elif signup_type == "seller":
@@ -518,18 +518,25 @@ def signup_user(signup_type):
         return False, None
 
 
+def product_from_dict(product):
+    if product["category"] == "phone":
+        product["ram_gb"] = product["phone_ram_gb"]
+        product["storage_gb"] = product["phone_storage_gb"]
+        return Phone.from_dict(product)
+    elif product["category"] == "laptop":
+        product["ram_gb"] = product["laptop_ram_gb"]
+        product["storage_gb"] = product["laptop_storage_gb"]
+        return Laptop.from_dict(product)
+    elif product["category"] == "camera":
+        return Camera.from_dict(product)
+
+
 def show_products():
     try:
-        phones = Phone.get_approved_products()
-        laptops = Laptop.get_approved_products()
-        cameras = Camera.get_approved_products()
+        products = Product.get_approved_products()
         print(colorama.Fore.BLUE)
-        for phone in phones:
-            print(Phone.from_dict(phone))
-        for laptop in laptops:
-            print(Laptop.from_dict(laptop))
-        for camera in cameras:
-            print(Camera.from_dict(camera))
+        for product in products:
+            print(product_from_dict(product))
         print(colorama.Fore.WHITE)
 
     except ValueError as e:
@@ -563,6 +570,8 @@ def handle_customer_add_actions(customer, method):
             if not successful:
                 print_error("Failed To do task")
                 continue
+
+            print_successful("Added Successfully")
 
             again = input("Anything Else?\n1- Yes\n")
 
@@ -615,15 +624,16 @@ def handle_customer_remove_actions(customer, method):
 def show_customer_cart_and_favorites(customer_id):
     print(colorama.Fore.BLUE)
 
-    customer = CustomerEmployee.get_customer_byID(customer_id)
+    cart_items = Customer.get_cart_items(customer_id)
+    favorites = Customer.get_favorites(customer_id)
 
     print("\n========== CART ==========")
 
-    if len(customer["cart"]) == 0:
+    if len(cart_items) == 0:
         print("Your cart is empty.")
     else:
-        for product_id in customer["cart"]:
-            product = Product.get_product_byID(product_id)
+        for item in cart_items:
+            product = Product.get_product_byID(item["product_id"])
 
             if product:
                 print(
@@ -638,11 +648,11 @@ def show_customer_cart_and_favorites(customer_id):
     # Favorites
     print("\n======== FAVORITES ========")
 
-    if len(customer["favorites"]) == 0:
+    if len(favorites) == 0:
         print("Your favorites are empty.")
     else:
-        for product_id in customer["favorites"]:
-            product = Product.get_product_byID(product_id)
+        for favorite in favorites:
+            product = Product.get_product_byID(favorite["product_id"])
 
             if product:
                 print(
@@ -659,10 +669,10 @@ def show_customer_cart_and_favorites(customer_id):
 
 def add_cart_to_favorites(customer):
     try:
-        if Customer.add_cart_to_favorites(customer.id):
+        if customer.add_favorites_to_cart():
             print_successful("Favorites added to cart successfully!")
         else:
-            print_error("Customer not found.")
+            print_error("Failed to add favorites to cart.")
 
     except ValueError as e:
         print_error(e)
@@ -699,9 +709,13 @@ def see_user_tickets(user, sender_type):
 def add_to_balance(user):
     try:
         add_balance = int(input("Enter amount to add to balance:\n"))
+
+        if add_balance <= 0:
+            raise ValueError("Amount must be greater than zero.")
+
         customer = Customer.from_dict(CustomerEmployee.get_customer_byID(user.id))
         customer.balance = customer.balance + add_balance
-        if Customer.add_to_balance(user.id, customer.balance):
+        if customer.change_balance(customer.balance):
             print_successful(f"Balance was added.")
         else:
             print_error("Error in adding balance.")
@@ -839,7 +853,7 @@ def make_product(seller):
             new_product.save()
 
             print_successful(
-                f"Product with ID {new_product.id} has been made and has to be approved.\n"
+                "Product has been made and has to be approved.\n"
             )
             register_again = input("Register another?\n1- Yes\n")
             if register_again != "1":
@@ -855,12 +869,7 @@ def see_seller_unapproved_products(seller):
         print("\n====== Unapproved Products ======\n")
         unapproved_products = seller.get_seller_unapproved_products()
         for up in unapproved_products:
-            if "battery_mah" in up:
-                product_obj = Phone.from_dict(up)
-            elif "cpu" in up:
-                product_obj = Laptop.from_dict(up)
-            elif "sensor_type" in up:
-                product_obj = Camera.from_dict(up)
+            product_obj = product_from_dict(up)
             print(product_obj, end="\n\n")
     except ValueError as e:
         print_error(e)
@@ -870,18 +879,10 @@ def see_seller_selling_products(seller):
     try:
         print(colorama.Fore.BLUE)
         print("\n====== Selling Products ======\n")
-        seller_json = SellerEmployee.get_seller_byID(seller.id)
-        for selling_product_id in seller_json["selling_products"]:
-            product_data = Product.get_product_byID(selling_product_id)
-            if product_data is None:
-                continue
-            if "battery_mah" in product_data:
-                product_obj = Phone.from_dict(product_data)
-            elif "cpu" in product_data:
-                product_obj = Laptop.from_dict(product_data)
-            elif "sensor_type" in product_data:
-                product_obj = Camera.from_dict(product_data)
-            print(product_obj, end="\n\n")
+        for product_data in Product.get_approved_products():
+            if product_data["seller_id"] == seller.id:
+                product_obj = product_from_dict(product_data)
+                print(product_obj, end="\n\n")
     except ValueError as e:
         print_error(e)
 
@@ -901,12 +902,12 @@ def delete_product_from_seller(seller):
 
             product_id = int(product_id)
 
-            seller_json = SellerEmployee.get_seller_byID(seller.id)
-            if product_id not in seller_json["selling_products"]:
+            product_data = Product.get_product_byID(product_id)
+            if product_data is None or product_data["seller_id"] != seller.id:
                 print_error("This product does not belong to you.\n")
                 continue
             else:
-                if Seller.delete_product_from_seller(seller_json, product_id):
+                if Seller.delete_product_from_seller(seller.id, product_id):
                     print_successful(
                         "Product was removed from your selling products successfully!\n"
                     )
@@ -932,8 +933,8 @@ def edit_product(seller=None):
             product_id = int(product_id)
 
             if not seller == None:
-                seller_json = SellerEmployee.get_seller_byID(seller.id)
-                if product_id not in seller_json["selling_products"]:
+                product_data = Product.get_product_byID(product_id)
+                if product_data is None or product_data["seller_id"] != seller.id:
                     print_error("This product does not belong to you.\n")
                     continue
 
@@ -942,12 +943,7 @@ def edit_product(seller=None):
                 print_error("Invalid ID.")
                 continue
 
-            if "battery_mah" in product_data:
-                product = Phone.from_dict(product_data)
-            elif "cpu" in product_data:
-                product = Laptop.from_dict(product_data)
-            elif "sensor_type" in product_data:
-                product = Camera.from_dict(product_data)
+            product = product_from_dict(product_data)
 
             print(
                 "\nWhich field do you want to edit?\n"
@@ -976,23 +972,13 @@ def edit_product(seller=None):
                     print_error("Invalid choice.\n")
                     continue
 
-            edited_product = {
-                "id": product.id,
-                "name": product.name,
-                "brand": product.brand,
-                "price": product.price,
-                "category": product.category,
-                "seller_id": product.seller_id,
-                "date_created": product_data["date_created"],
-            }
-            edited_product.update(product.extra_fields())
-
-            if type(product) == Phone:
-                edited = Phone.edit_product(edited_product)
-            elif type(product) == Laptop:
-                edited = Laptop.edit_product(edited_product)
-            elif type(product) == Camera:
-                edited = Camera.edit_product(edited_product)
+            edited = Product.edit_product(
+                product.id,
+                product.name,
+                product.brand,
+                product.price,
+                *product.extra_fields().values()
+            )
 
             if edited:
                 print_successful("Product was edited successfully!\n")
@@ -1023,6 +1009,8 @@ def remove_customer():
                 again = input("Do you want to delete another customer?\n1- Yes\n")
                 if again != "1":
                     break
+            else:
+                print_error("Customer not found.\n")
 
         except ValueError as e:
             print_error(e)
@@ -1057,7 +1045,7 @@ def answer_ticket(employee_type):
                 break
 
             if not ticket_id.isdigit():
-                print_error("Customer ID must be a number.\n")
+                print_error("Ticket ID must be a number.\n")
                 continue
 
             ticket_id = int(ticket_id)
@@ -1067,7 +1055,9 @@ def answer_ticket(employee_type):
             else:
                 user_type = "seller"
 
-            if Ticket.check_unanswered_ticketID(ticket_id, user_type):
+            unanswered_tickets = Ticket.get_unanswered_sendertype_tickets(user_type)
+
+            if any(ticket["id"] == ticket_id for ticket in unanswered_tickets):
                 answer = input("Enter answer for the ticket:\n")
                 if employee_type == "customer_employee":
                     answered = CustomerEmployee.answer_ticket(ticket_id, answer)
@@ -1099,12 +1089,7 @@ def show_unapproved_products():
     print(colorama.Fore.BLUE)
     print("======= Unapproved products ========")
     for up in unapproved_products:
-        if "battery_mah" in up:
-            product_obj = Phone.from_dict(up)
-        elif "cpu" in up:
-            product_obj = Laptop.from_dict(up)
-        elif "sensor_type" in up:
-            product_obj = Camera.from_dict(up)
+        product_obj = product_from_dict(up)
         print(product_obj, end="\n---------------------\n")
 
 
@@ -1115,9 +1100,18 @@ def approve_product_or_seller(product_or_seller):
                 show_unapproved_products()
 
             print(colorama.Fore.WHITE)
-            product_or_seller_id = int(
-                input(f"Enter {product_or_seller} ID to approve:\n")
+            product_or_seller_id = input(
+                f"Enter {product_or_seller} ID to approve (Enter 'e' to exit):\n"
             )
+            if product_or_seller_id.lower() == "e":
+                print_successful(f"Exited approving {product_or_seller}!\n")
+                break
+
+            if not product_or_seller_id.isdigit():
+                print_error("ID must be a number.\n")
+                continue
+
+            product_or_seller_id = int(product_or_seller_id)
             if product_or_seller == "seller":
                 approved = SellerEmployee.approve_seller(product_or_seller_id)
             elif product_or_seller == "product":
@@ -1128,6 +1122,8 @@ def approve_product_or_seller(product_or_seller):
                 again = input("Approve another?\n1- Yes\n")
                 if again != "1":
                     break
+            else:
+                print_error(f"No unapproved {product_or_seller} was found with this ID.\n")
         except ValueError as e:
             print_error(e)
 
@@ -1158,32 +1154,23 @@ def remove_seller_or_product(product_or_seller):
                 again = input("Remove another?\n1- Yes\n")
                 if again != "1":
                     break
+            else:
+                print_error(f"No approved {product_or_seller} was found with this ID.\n")
         except ValueError as e:
             print_error(e)
 
 
 def show_all_products():
-    phones = Phone.get_approved_products()
-    laptops = Laptop.get_approved_products()
-    cameras = Camera.get_approved_products()
+    products = Product.get_approved_products()
     print(colorama.Fore.BLUE)
     print("\n======= All products =======\n")
-    for phone in phones:
-        print(Phone.from_dict(phone), end="\n--------------------\n")
-    for laptop in laptops:
-        print(Laptop.from_dict(laptop), end="\n--------------------\n")
-    for camera in cameras:
-        print(Camera.from_dict(camera), end="\n--------------------\n")
+    for product in products:
+        print(product_from_dict(product), end="\n--------------------\n")
 
 
-@staticmethod
 def filter_products():
 
-    products = (
-        Phone.get_approved_products()
-        + Laptop.get_approved_products()
-        + Camera.get_approved_products()
-    )
+    products = Product.get_approved_products()
 
     while True:
         try:
@@ -1253,12 +1240,7 @@ def filter_products():
 
             for product in filtered_products:
                 print(colorama.Fore.BLUE)
-                if "battery_mah" in product:
-                    product_obj = Phone.from_dict(product)
-                elif "cpu" in product:
-                    product_obj = Laptop.from_dict(product)
-                elif "sensor_type" in product:
-                    product_obj = Camera.from_dict(product)
+                product_obj = product_from_dict(product)
                 print(product_obj, end="\n-------------------------\n")
                 print(colorama.Fore.WHITE)
 
@@ -1269,7 +1251,6 @@ def filter_products():
 import csv
 
 
-@staticmethod
 def export_customer_or_seller(employee_type):
 
     data = {
@@ -1285,7 +1266,8 @@ def export_customer_or_seller(employee_type):
     users = user_data["file"]()
 
     if not users:
-        raise ValueError(f"No {employee_type}s found.")
+        print_error(f"No {employee_type}s found.")
+        return False
 
     while True:
         try:
@@ -1377,6 +1359,7 @@ def customers_Shop_panel(customer):
             case "1":
                 try:
                     customer.checkout()
+                    print_successful("Checkout was successful!")
                 except ValueError as e:
                     print_error(e)
             case "2":
@@ -1627,6 +1610,8 @@ def employee_Ticket_panel(user, employee_type, sender_type):
 
 
 def main():
+
+    MySQLcommands.initialize_database()
 
     customersManager = CustomerManager()
     customersManager.firstname = "Radin"

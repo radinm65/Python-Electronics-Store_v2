@@ -146,6 +146,9 @@ class Person(ABC):
             raise ValueError("No users of this type have been registered yet")
         
         if user and (query_role != "employee" or user["role"] == role):
+            if role == "seller" and user["status"] == "pending":
+                raise ValueError("Your account hasn't been approved yet.")
+
             return True, user
 
         return False, None

@@ -241,9 +241,20 @@ class MySQLcommands:
 
             return cursor
 
-        except mysql.connector.Error:
+        except mysql.connector.Error as e:
             connection.rollback()
             cursor.close()
+
+            if e.errno == 1062:
+                if "username" in e.msg:
+                    raise ValueError("Username already exists.")
+                raise ValueError("This record already exists.")
+
+            if e.errno == 1451:
+                raise ValueError(
+                    "This record can't be removed because it is linked to sales."
+                )
+
             raise
         
     @staticmethod

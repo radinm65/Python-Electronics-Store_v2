@@ -941,3 +941,55 @@ class MySQLProgramQueries:
             return cursor.rowcount > 0
         finally:
             cursor.close()
+
+    # Report queries /////////////////////////////
+
+    @staticmethod
+    def get_customers_sales_query():
+        query = """
+            SELECT
+                c.firstname,
+                c.lastname,
+                p.price,
+                s.sale_date
+
+            FROM sales AS s
+
+            JOIN customers AS c
+                ON s.customer_id = c.id
+
+            JOIN products AS p
+                ON s.product_id = p.id
+        """
+
+        cursor = MySQLcommands.execute_query(query)
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    @staticmethod
+    def get_sellers_sales_query():
+        query = """
+            SELECT
+                se.firstname,
+                se.lastname,
+                p.price,
+                s.sale_date
+
+            FROM sales AS s
+
+            JOIN products AS p
+                ON s.product_id = p.id
+
+            JOIN sellers AS se
+                ON p.seller_id = se.id
+        """
+
+        cursor = MySQLcommands.execute_query(query)
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()

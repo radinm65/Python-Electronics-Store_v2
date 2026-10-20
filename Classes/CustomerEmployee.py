@@ -1,5 +1,4 @@
 from Classes.Employee import Employee
-from Classes.Ticket import Ticket
 from Database.MySQLProgramQueries import MySQLProgramQueries
 
 class CustomerEmployee(Employee):

@@ -1,6 +1,5 @@
 from Classes.Manager import Manager
-from Classes.SellerEmployee import SellerEmployee
-from FileCommands import FileCommands
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 
 class SellerManager(Manager):
@@ -37,36 +36,35 @@ class SellerManager(Manager):
             "date_hired": new_employee.date_hired.isoformat(),
             "salary": new_employee.salary,
         }
-        return FileCommands.add_data("./Database/SellerEmployees.json", json_employee)
+        return MySQLProgramQueries.add_employee_query(
+            new_employee.firstname,
+            new_employee.lastname,
+            new_employee.username,
+            new_employee.password,
+            new_employee.age,
+            new_employee.phone_num,
+            new_employee.address,
+            new_employee.bank_account_num,
+            new_employee.salary,
+            "seller_employee"
+        )
 
     @staticmethod
     def fire_employee(seller_employee_id):
-        return FileCommands.delete_data(
-            "./Database/SellerEmployees.json", seller_employee_id
-        )
+        return MySQLProgramQueries.delete_employee_query(seller_employee_id, "seller_employee")
 
     @staticmethod
     def get_seller_employees():
-        return FileCommands.get_file_data("./Database/SellerEmployees.json")
+        return MySQLProgramQueries.get_all_employees_query("seller_employee")
 
     @staticmethod
     def get_seller_employee_byID(seller_employee_id):
-        seller_employees = SellerManager.get_seller_employees()
-        found_se = next(
-            (se for se in seller_employees if se["id"] == seller_employee_id), None
-        )
-        return found_se
+        return MySQLProgramQueries.get_approved_seller_query(seller_employee_id)
 
-    @staticmethod
-    def save_seller_employees(seller_employees):
-        return FileCommands.save_file_data(
-            "./Database/SellerEmployees.json", seller_employees
-        )
-
-    @staticmethod
-    def check_employee_byID(emp_id):
-        seller_employees = SellerManager.get_seller_employees()
-        for se in seller_employees:
-            if se["id"] == emp_id:
-                return True
-        return False
+    # @staticmethod
+    # def check_employee_byID(emp_id):
+    #     seller_employees = SellerManager.get_seller_employees()
+    #     for se in seller_employees:
+    #         if se["id"] == emp_id:
+    #             return True
+    #     return False

@@ -27,8 +27,8 @@ class CustomerManager(Manager):
             new_customer.phone_num,
             new_customer.address,
             new_customer.bank_account_num,
-            new_customer.date_hired,
             new_customer.salary,
+            "seller_employee",
         )
 
     @staticmethod

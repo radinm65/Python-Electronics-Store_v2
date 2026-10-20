@@ -1,15 +1,14 @@
 from datetime import datetime
-from IDGenerator import ticket_id_generator
-from FileCommands import FileCommands
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 
 class Ticket:
 
     def __init__(self):
-        self.id = ticket_id_generator.next_id()
+        self.id = None
         self.from_id = None
         self.response = None
-        self.__date_created = datetime.today()
+        self.__date_created = None
 
     @property
     def request(self):
@@ -18,14 +17,10 @@ class Ticket:
     @request.setter
     def request(self, new_request):
         if len(new_request) > 200:
-            raise ValueError(
-                "Ticket request must be under 200 characters."
-            )
+            raise ValueError("Ticket request must be under 200 characters.")
 
         if len(new_request) < 10:
-            raise ValueError(
-                "Ticket request must be at least 10 characters."
-            )
+            raise ValueError("Ticket request must be at least 10 characters.")
         self.__request = new_request
 
     @property
@@ -35,14 +30,10 @@ class Ticket:
     @from_name.setter
     def from_name(self, new_from_name):
         if len(new_from_name) < 3:
-            raise ValueError(
-                "Name must be at least 3 characters."
-            )
+            raise ValueError("Name must be at least 3 characters.")
 
         if any(char.isdigit() for char in new_from_name):
-            raise ValueError(
-                "Name shouldn't have numbers."
-            )
+            raise ValueError("Name shouldn't have numbers.")
         self.__from_name = new_from_name
 
     @property
@@ -56,68 +47,40 @@ class Ticket:
     @sender_type.setter
     def sender_type(self, new_type):
         if new_type not in ("customer", "seller"):
-            raise ValueError(
-                "Sender type must be customer or seller."
-            )
+            raise ValueError("Sender type must be customer or seller.")
         self.__sender_type = new_type
 
     def save(self):
-        new_ticket = {
-            "id": self.id,
-            "from_name": self.from_name,
-            "from_id": self.from_id,
-            "request": self.request,
-            "response": self.response,
-            "sender_type": self.sender_type,
-            "date_created": self.date_created.isoformat(),
-        }
-        return FileCommands.add_data("./Database/Tickets.json", new_ticket)
+        return MySQLProgramQueries.add_ticket_query(
+            self.from_name, self.from_id, self.sender_type, self.request
+        )
 
     @staticmethod
     def get_all_tickets():
-        return FileCommands.get_file_data("./Database/Tickets.json")
+        return MySQLProgramQueries.get_all_tickets_query()
 
     @staticmethod
     def get_sendertype_tickets(sender_type):
-        user_tickets = []
-        all_tickets = Ticket.get_all_tickets()
-        for ticket in all_tickets:
-            if ticket["sender_type"] == sender_type:
-                user_tickets.append(ticket)
-        return user_tickets
+        return MySQLProgramQueries.get_sender_type_tickets_query(sender_type)
 
     @staticmethod
     def get_unanswered_sendertype_tickets(sender_type):
-        unanswered_tickets = []
-        all_tickets = Ticket.get_all_tickets()
-        for ticket in all_tickets:
-            if ticket["sender_type"] == sender_type and ticket["response"] == "":
-                unanswered_tickets.append(ticket)
-        return unanswered_tickets
+        return MySQLProgramQueries.get_unanswered_sender_type_tickets_query(sender_type)
 
-    @staticmethod
-    def check_unanswered_ticketID(ticketID, sender_type):
-        unanswered_tickets = Ticket.get_unanswered_sendertype_tickets(sender_type)
-        for ut in unanswered_tickets:
-            if ticketID == ut["id"]:
-                return True
-        return False
+    # @staticmethod
+    # def check_unanswered_ticketID(ticketID, sender_type):
+    #     unanswered_tickets = Ticket.get_unanswered_sendertype_tickets(sender_type)
+    #     for ut in unanswered_tickets:
+    #         if ticketID == ut["id"]:
+    #             return True
+    #     return False
 
     @staticmethod
     def get_user_tickets(user_id, sender_type):
-        user_tickets = []
-        if sender_type == "customer":
-            tickets = Ticket.get_sendertype_tickets("customer")
-        else:
-            tickets = Ticket.get_sendertype_tickets("seller")
-
-        for ticket in tickets:
-            if ticket["from_id"] == user_id:
-                user_tickets.append(ticket)
-        return user_tickets
+        return MySQLProgramQueries.get_user_tickets_query(sender_type, user_id)
 
     @staticmethod
-    def from_dict(ticket_dict):
+    def from_database(ticket_dict):
         ticket = Ticket()
         ticket.id = ticket_dict["id"]
         ticket.from_id = ticket_dict["from_id"]
@@ -129,11 +92,12 @@ class Ticket:
         return ticket
 
     def __str__(self):
-            return (
-                f"ID: {self.id}\n"
-                f"From: {self.from_name}\n"
-                f"From ID: {self.from_id}\n"
-                f"Request: {self.request}\n"
-                f"Response: {self.response}\n"
-                f"Date Created: {self.date_created}"
-            )
+        return (
+            f"ID: {self.id}\n"
+            f"From: {self.from_name}\n"
+            f"From ID: {self.from_id}\n"
+            f"Sender Type: {self.sender_type}\n"
+            f"Request: {self.request}\n"
+            f"Response: {self.response}\n"
+            f"Date Created: {self.date_created}"
+        )

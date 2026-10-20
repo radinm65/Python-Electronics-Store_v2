@@ -514,6 +514,55 @@ class MySQLProgramQueries:
             cursor.close()
 
     @staticmethod
+    def get_all_tickets_query():
+
+        query = """
+            SELECT *
+            FROM tickets
+        """
+
+        cursor = MySQLcommands.execute_query(query)
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    @staticmethod
+    def get_sender_type_tickets_query(sender_type):
+
+        query = """
+            SELECT *
+            FROM tickets
+            WHERE sender_type = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (sender_type,))
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            
+            
+    @staticmethod
+    def get_unanswered_sender_type_tickets_query(sender_type):
+
+        query = """
+            SELECT *
+            FROM tickets
+            WHERE sender_type = %s
+                AND response = ''
+        """
+
+        cursor = MySQLcommands.execute_query(query, (sender_type,))
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    @staticmethod
     def answer_ticket_query(ticket_id, answer):
         query = """
             UPDATE tickets

@@ -38,8 +38,14 @@ class Employee(Person):
         if value < 0:
             raise ValueError("Salary can't be negative.")
 
+        if value > 100000:
+            raise ValueError("Salary can't be greater than 100000.")
+
         self.__salary = value
 
     @staticmethod
     def answer_ticket(ticket_id, answer):
+        if len(answer.strip()) < 10:
+            raise ValueError("Ticket response must be at least 10 characters.")
+
         return MySQLProgramQueries.answer_ticket_query(ticket_id, answer) 

@@ -1,5 +1,4 @@
-from Classes.Product import Product
-from FileCommands import FileCommands
+from Database.MySQLProgramQueries import MySQLProgramQueries
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference
@@ -52,28 +51,26 @@ class Report:
     @staticmethod
     def generate_top_customers_report():
 
-        customers = FileCommands.get_file_data("./Database/Customers.json")
+        sales = MySQLProgramQueries.get_customers_sales_query()
+
+        if len(sales) == 0:
+            raise ValueError("No sales have been recorded yet.")
 
         monthly_totals = {}
         customer_totals = {}
 
-        for customer in customers:
-            name = customer["firstname"] + " " + customer["lastname"]
-            for purchase in customer["bought"]:
-                date = datetime.fromisoformat(purchase["date"])
-                month_key = date.strftime("%Y-%m")
-                month_label = date.strftime("%B").upper()
+        for sale in sales:
+            name = sale["firstname"] + " " + sale["lastname"]
+            date = sale["sale_date"]
+            month_key = date.strftime("%Y-%m")
+            month_label = date.strftime("%B").upper()
 
-                product = Product.get_product_byID(purchase["product_id"])
-                if not product:
-                    continue
-
-                price = product["price"]
-                monthly_totals.setdefault(month_key, {"label": month_label, "data": {}})
-                monthly_totals[month_key]["data"][name] = (
-                    monthly_totals[month_key]["data"].get(name, 0) + price
-                )
-                customer_totals[name] = customer_totals.get(name, 0) + price
+            price = sale["price"]
+            monthly_totals.setdefault(month_key, {"label": month_label, "data": {}})
+            monthly_totals[month_key]["data"][name] = (
+                monthly_totals[month_key]["data"].get(name, 0) + price
+            )
+            customer_totals[name] = customer_totals.get(name, 0) + price
 
         top_customers = sorted(customer_totals.items(), key=lambda x: x[1], reverse=True)[:3]
         top_names = [name for name, _ in top_customers]
@@ -118,31 +115,28 @@ class Report:
     @staticmethod
     def generate_top_sellers_report():
 
-        sellers = FileCommands.get_file_data("./Database/Sellers.json")
+        sales = MySQLProgramQueries.get_sellers_sales_query()
+
+        if len(sales) == 0:
+            raise ValueError("No sales have been recorded yet.")
 
         monthly_totals = {}   # month_key -> {"label": month_label, "data": {seller_name: total}}
         seller_totals = {}    # seller_name -> total فروش کل (برای تشخیص ۳ نفر برتر)
 
-        for seller in sellers:
-            name = seller["firstname"] + " " + seller["lastname"]
+        for sale in sales:
+            name = sale["firstname"] + " " + sale["lastname"]
+            date = sale["sale_date"]
+            month_key = date.strftime("%Y-%m")
+            month_label = date.strftime("%B").upper()
 
-            for sale in seller["sold"]:
-                date = datetime.fromisoformat(sale["date"])
-                month_key = date.strftime("%Y-%m")
-                month_label = date.strftime("%B").upper()
+            price = sale["price"]
 
-                product = Product.get_product_byID(sale["product_id"])
-                if not product:
-                    continue
+            monthly_totals.setdefault(month_key, {"label": month_label, "data": {}})
+            monthly_totals[month_key]["data"][name] = (
+                monthly_totals[month_key]["data"].get(name, 0) + price
+            )
 
-                price = product["price"]
-
-                monthly_totals.setdefault(month_key, {"label": month_label, "data": {}})
-                monthly_totals[month_key]["data"][name] = (
-                    monthly_totals[month_key]["data"].get(name, 0) + price
-                )
-
-                seller_totals[name] = seller_totals.get(name, 0) + price
+            seller_totals[name] = seller_totals.get(name, 0) + price
 
         # پیدا کردن ۳ فروشنده برتر (بر اساس مجموع کل فروش)
         top_sellers = sorted(seller_totals.items(), key=lambda x: x[1], reverse=True)[:3]

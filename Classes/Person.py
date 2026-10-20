@@ -99,6 +99,9 @@ class Person(ABC):
         if int(new_age) > 80:
             raise ValueError("Age cannot be above 80.")
 
+        if int(new_age) < 16:
+            raise ValueError("Age cannot be below 16.")
+
         self.__age = int(new_age)
 
     @property

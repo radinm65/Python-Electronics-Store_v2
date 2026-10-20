@@ -14,6 +14,11 @@ class SellerManager(Manager):
         if amount <= 0:
             raise ValueError("Raise amount must be greater than zero.")
 
+        employee = MySQLProgramQueries.get_employee_query(seller_employee_id, "seller_employee")
+
+        if employee is not None and employee["salary"] + amount > 100000:
+            raise ValueError("Salary can't be greater than 100000.")
+
         return MySQLProgramQueries.raise_employee_salary_query(amount, seller_employee_id, "seller_employee")
 
     @staticmethod

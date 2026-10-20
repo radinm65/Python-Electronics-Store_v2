@@ -14,6 +14,11 @@ class CustomerManager(Manager):
         if amount <= 0:
             raise ValueError("Raise amount must be greater than zero.")
 
+        employee = MySQLProgramQueries.get_employee_query(customers_employee_id, "customer_employee")
+
+        if employee is not None and employee["salary"] + amount > 100000:
+            raise ValueError("Salary can't be greater than 100000.")
+
         return MySQLProgramQueries.raise_employee_salary_query(amount, customers_employee_id, "customer_employee")
 
     @staticmethod

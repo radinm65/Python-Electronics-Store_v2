@@ -1,3 +1,4 @@
+import os
 import colorama
 from Classes.CustomerManager import CustomerManager
 from Classes.SellerManager import SellerManager
@@ -23,6 +24,13 @@ def print_error(message):
 def print_successful(message):
     print(colorama.Fore.GREEN)
     print(message, colorama.Fore.WHITE)
+
+
+def input_number(message):
+    try:
+        return int(input(message))
+    except ValueError:
+        raise ValueError("Please enter a whole number.")
 
 
 # Show Menus -------------------
@@ -208,7 +216,7 @@ def hire_employee(employee_type):
 
             new_employee.bank_account_num = input("Enter Bank Account Number:\n")
 
-            new_employee.salary = int(input("Enter Salary:\n"))
+            new_employee.salary = input_number("Enter Salary:\n")
 
             if employee_type == "customer":
                 CustomerManager.hire_employee(new_employee)
@@ -227,7 +235,7 @@ def hire_employee(employee_type):
 
 def fire_employee(employee_type):
     try:
-        emp_id = int(input(f"\nEnter {employee_type} Employee ID to Fire:\n"))
+        emp_id = input_number(f"\nEnter {employee_type} Employee ID to Fire:\n")
         if employee_type == "customer":
             if CustomerManager.fire_employee(emp_id):
                 print_successful("Customer Employee is Fired!")
@@ -245,10 +253,10 @@ def fire_employee(employee_type):
 def give_employee_raise(employee_type):
     try:
         success = False
-        emp_id = int(input(f"\nEnter {employee_type} Employee ID to Give Raise:\n"))
+        emp_id = input_number(f"\nEnter {employee_type} Employee ID to Give Raise:\n")
         if employee_type == "customer":
             if CustomerManager.get_customer_employee_byID(emp_id):
-                salary_raise = int(input("How much raise?\n"))
+                salary_raise = input_number("How much raise?\n")
                 CustomerManager.raise_salary(emp_id, salary_raise)
                 success = True
             else:
@@ -257,7 +265,7 @@ def give_employee_raise(employee_type):
         elif employee_type == "seller":
 
             if SellerManager.get_seller_employee_byID(emp_id):
-                salary_raise = int(input("How much raise?\n"))
+                salary_raise = input_number("How much raise?\n")
                 SellerManager.raise_salary(emp_id, salary_raise)
                 success = True
             else:
@@ -399,6 +407,10 @@ def login_user(username, password, usertype, managers):
         },
     }
 
+    if usertype not in users:
+        print_error("Invalid user type.")
+        return False
+
     try:
         user_data = users[usertype]
 
@@ -454,10 +466,6 @@ def login_user(username, password, usertype, managers):
         print_error(e)
         return False
 
-    except KeyError:
-        print_error("Invalid user type.")
-        return False
-
 
 def signup_user(signup_type):
     try:
@@ -484,7 +492,7 @@ def signup_user(signup_type):
                 if customer["username"] == username:
                     raise ValueError("Username already exists.")
         elif signup_type == "seller":
-            for seller in SellerEmployee.get_sellers():
+            for seller in SellerEmployee.get_sellers() + SellerEmployee.get_unapproved_sellers():
                 if seller["username"] == username:
                     raise ValueError("Username already exists.")
 
@@ -604,6 +612,10 @@ def handle_customer_remove_actions(customer, method):
             if product_id == "e":
                 break
 
+            if not product_id.isdigit():
+                print_error("Enter number for ID.")
+                continue
+
             product_id = int(product_id)
             successful = actions[method](product_id)
 
@@ -696,6 +708,10 @@ def see_user_tickets(user, sender_type):
     try:
         user_tickets = Ticket.get_user_tickets(user.id, sender_type)
 
+        if len(user_tickets) == 0:
+            print_error("You have not submitted any tickets.\n")
+            return
+
         print(colorama.Fore.BLUE)
         print("======= User Tickets =======\n")
         for ticket in user_tickets:
@@ -708,12 +724,16 @@ def see_user_tickets(user, sender_type):
 
 def add_to_balance(user):
     try:
-        add_balance = int(input("Enter amount to add to balance:\n"))
+        add_balance = input_number("Enter amount to add to balance:\n")
 
         if add_balance <= 0:
             raise ValueError("Amount must be greater than zero.")
 
         customer = Customer.from_dict(CustomerEmployee.get_customer_byID(user.id))
+
+        if customer.balance + add_balance > 2000000:
+            raise ValueError("Balance can't be greater than 2000000.")
+
         customer.balance = customer.balance + add_balance
         if customer.change_balance(customer.balance):
             print_successful(f"Balance was added.")
@@ -904,7 +924,7 @@ def delete_product_from_seller(seller):
 
             product_data = Product.get_product_byID(product_id)
             if product_data is None or product_data["seller_id"] != seller.id:
-                print_error("This product does not belong to you.\n")
+                print_error("This product is not one of your approved products.\n")
                 continue
             else:
                 if Seller.delete_product_from_seller(seller.id, product_id):
@@ -935,7 +955,7 @@ def edit_product(seller=None):
             if not seller == None:
                 product_data = Product.get_product_byID(product_id)
                 if product_data is None or product_data["seller_id"] != seller.id:
-                    print_error("This product does not belong to you.\n")
+                    print_error("This product is not one of your approved products.\n")
                     continue
 
             product_data = Product.get_product_byID(product_id)
@@ -1023,7 +1043,10 @@ def show_user_tickets(all_or_unanswerd, sender_type):
         elif all_or_unanswerd == "unanswered":
             user_tickets = Ticket.get_unanswered_sendertype_tickets(sender_type)
         if len(user_tickets) == 0:
-            print_successful("You have no unanswered tickets!\n")
+            if all_or_unanswerd == "all":
+                print_error(f"No {sender_type} has submitted a ticket yet.\n")
+            else:
+                print_successful("You have no unanswered tickets!\n")
         else:
             print(colorama.Fore.BLUE)
             print(
@@ -1218,8 +1241,8 @@ def filter_products():
                     )
 
                 case "4":
-                    min_price = int(input("Enter minimum price:\n"))
-                    max_price = int(input("Enter maximum price:\n"))
+                    min_price = input_number("Enter minimum price:\n")
+                    max_price = input_number("Enter maximum price:\n")
 
                     filtered_products = list(
                         filter(
@@ -1611,7 +1634,13 @@ def employee_Ticket_panel(user, employee_type, sender_type):
 
 def main():
 
-    MySQLcommands.initialize_database()
+    try:
+        MySQLcommands.initialize_database()
+    except Exception as e:
+        print_error(f"Couldn't connect to the database: {e}")
+        return
+
+    os.makedirs("./Reports", exist_ok=True)
 
     customersManager = CustomerManager()
     customersManager.firstname = "Radin"

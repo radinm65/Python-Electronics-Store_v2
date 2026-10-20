@@ -843,3 +843,35 @@ class MySQLProgramQueries:
             return cursor.fetchone()
         finally:
             cursor.close()
+
+    @staticmethod
+    def get_all_employees_query(role):
+
+        query = """
+            SELECT * FROM employees
+            WHERE role = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (role,))
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            
+            
+    @staticmethod
+    def raise_employee_salary_query(amount, employee_id, role):
+        query = """
+            UPDATE employees
+            SET salary = salary + %s
+            WHERE id = %s
+                AND role = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (amount, employee_id, role))
+
+        try:
+            return cursor.rowcount > 0
+        finally:
+            cursor.close()

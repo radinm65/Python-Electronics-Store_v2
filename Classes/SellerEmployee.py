@@ -1,9 +1,4 @@
 from Classes.Employee import Employee
-from Classes.Ticket import Ticket
-from Classes.Product import Product
-from Classes.Phone import Phone
-from Classes.Laptop import Laptop
-from Classes.Camera import Camera
 from Database.MySQLProgramQueries import MySQLProgramQueries
 
 

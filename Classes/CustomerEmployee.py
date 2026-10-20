@@ -1,42 +1,25 @@
 from Classes.Employee import Employee
 from Classes.Ticket import Ticket
-from FileCommands import FileCommands
-from IDGenerator import customer_employee_id_generator
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 class CustomerEmployee(Employee):
     def __init__(self):
         super().__init__()
-        self.id = customer_employee_id_generator.next_id()
+        self.id = None
 
 
     @staticmethod
     def get_customers():
-        return FileCommands.get_file_data("./Database/Customers.json")
+        return MySQLProgramQueries.get_customers_query()
 
     @staticmethod
     def get_customer_byID(customer_id):
-        customers = CustomerEmployee.get_customers()
-        found_customer = next(
-            (customer for customer in customers if customer["id"] == customer_id), None
-        )
-        return found_customer
+        return MySQLProgramQueries.get_customer_byID_query(customer_id)
 
 
     @staticmethod
     def delete_customer(customer_id):
-        return FileCommands.delete_data("./Database/Customers.json", customer_id)
-
-    @staticmethod
-    def answer_ticket(ticket_id, answer):
-        customer_tickets = Ticket.get_sendertype_tickets("customer")
-        for ticket in customer_tickets:
-            if ticket["id"] == ticket_id:
-                if ticket["response"] == "":
-                    ticket["response"] = answer
-                    return FileCommands.edit_data("./Database/Tickets.json", ticket)
-                else:
-                    raise ValueError("Ticket already has a response")
-        return False
+        return MySQLProgramQueries.delete_customer_query(customer_id)
 
 
     @classmethod

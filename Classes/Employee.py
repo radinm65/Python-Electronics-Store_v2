@@ -1,12 +1,12 @@
 from Classes.Person import Person
 from abc import abstractmethod
 from datetime import datetime
-
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 class Employee(Person):
     def __init__(self):
         super().__init__()
-        self.date_hired = datetime.today()
+        self.date_hired = None
         self.__bank_account_num = None
         self.__salary = None
 
@@ -41,6 +41,5 @@ class Employee(Person):
         self.__salary = value
 
     @staticmethod
-    @abstractmethod
-    def answer_ticket():
-        pass
+    def answer_ticket(ticket_id, answer):
+        return MySQLProgramQueries.answer_ticket_query(ticket_id, answer) 

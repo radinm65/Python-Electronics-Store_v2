@@ -4,123 +4,53 @@ from Classes.Product import Product
 from Classes.Phone import Phone
 from Classes.Laptop import Laptop
 from Classes.Camera import Camera
-from FileCommands import FileCommands
-from IDGenerator import seller_employee_id_generator
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 
 class SellerEmployee(Employee):
     def __init__(self):
         super().__init__()
-        self.id = seller_employee_id_generator.next_id()
-
-    @staticmethod
-    def save_sellers(sellers):
-        return FileCommands.save_file_data("./Database/Sellers.json", sellers)
+        self.id = None
 
     @staticmethod
     def get_unapproved_sellers():
-        return FileCommands.get_file_data("./Database/UnapprovedSellers.json")
+        return MySQLProgramQueries.get_sellers_query("pending")
 
     @staticmethod
     def get_unapproved_products():
-        return FileCommands.get_file_data("./Database/UnapprovedProducts.json")
+        return MySQLProgramQueries.get_products_query("pending")
 
     @staticmethod
     def approve_seller(seller_id):
-        if not SellerEmployee.check_unapproved_sellerID(seller_id):
-            raise ValueError("ID not found.\n")
-        unapproved_sellers = SellerEmployee.get_unapproved_sellers()
-        for us in unapproved_sellers:
-            if us["id"] == seller_id:
-                FileCommands.delete_data("./Database/UnapprovedSellers.json", seller_id)
-                return FileCommands.add_data("./Database/Sellers.json", us)
-        return False
+        return MySQLProgramQueries.approve_seller_query(seller_id)
 
     @staticmethod
     def approve_product(product_id):
-        unapproved_products = SellerEmployee.get_unapproved_products()
-        found = next((up for up in unapproved_products if up["id"] == product_id), None)
+        return MySQLProgramQueries.approve_product_query(product_id)
 
-        if found is None:
-            raise ValueError("ID not found.\n")
-
-        FileCommands.delete_data("./Database/UnapprovedProducts.json", product_id)
-
-        sellers = SellerEmployee.get_sellers()
-        for seller in sellers:
-            if seller["id"] == found["seller_id"]:
-                seller["selling_products"].append(product_id)
-                SellerEmployee.save_sellers(sellers)
-                break
-
-        if "battery_mah" in found:
-            return FileCommands.add_data("./Database/ApprovedPhones.json", found)
-        elif "cpu" in found:
-            return FileCommands.add_data("./Database/ApprovedLaptops.json", found)
-        elif "sensor_type" in found:
-            return FileCommands.add_data("./Database/ApprovedCameras.json", found)
-        return False
-
-    @staticmethod
-    def check_unapproved_sellerID(sellerID):
-        unapproved_sellers = SellerEmployee.get_unapproved_sellers()
-        for us in unapproved_sellers:
-            if sellerID == us["id"]:
-                return True
-        return False
+    # @staticmethod
+    # def check_unapproved_sellerID(sellerID):
+    #     unapproved_sellers = SellerEmployee.get_unapproved_sellers()
+    #     for us in unapproved_sellers:
+    #         if sellerID == us["id"]:
+    #             return True
+    #     return False
 
     @staticmethod
     def remove_seller(seller_id):
-        return FileCommands.delete_data("./Database/Sellers.json", seller_id)
+        return MySQLProgramQueries.delete_seller_query(seller_id)
 
     @staticmethod
     def remove_product(product_id):
-        product = Product.get_product_byID(product_id)
-        if product is None:
-            raise ValueError("ID not found.")
-
-        sellers = SellerEmployee.get_sellers()
-        for seller in sellers:
-            if seller["id"] == product["seller_id"]:
-                if product_id in seller["selling_products"]:
-                    seller["selling_products"].remove(product_id)
-                    SellerEmployee.save_sellers(sellers)
-                break
-
-        try:
-            return Phone.remove_product(product_id)
-        except ValueError:
-            pass
-        try:
-            return Laptop.remove_product(product_id)
-        except ValueError:
-            pass
-        return Camera.remove_product(product_id)
-
-
-    @staticmethod
-    def answer_ticket(ticket_id, answer):
-        seller_tickets = Ticket.get_sendertype_tickets("seller")
-        for ticket in seller_tickets:
-            if ticket["id"] == ticket_id:
-                if ticket["response"] == "":
-                    ticket["response"] = answer
-                    return FileCommands.edit_data("./Database/Tickets.json", ticket)
-                else:
-                    raise ValueError("Ticket already has a response")
-        return False
+        return MySQLProgramQueries.delete_product_query(product_id)
 
     @staticmethod
     def get_sellers():
-        return FileCommands.get_file_data("./Database/Sellers.json")
+        return MySQLProgramQueries.get_sellers_query("approved")
 
     @staticmethod
     def get_seller_byID(seller_id):
-        sellers = SellerEmployee.get_sellers()
-        found_seller = next(
-            (seller for seller in sellers if seller["id"] == seller_id), None
-        )
-        return found_seller
+        return MySQLProgramQueries.get_approved_seller_query(seller_id)
 
     @classmethod
     def from_dict(cls, data):

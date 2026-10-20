@@ -80,7 +80,7 @@ class Ticket:
         return MySQLProgramQueries.get_user_tickets_query(sender_type, user_id)
 
     @staticmethod
-    def from_database(ticket_dict):
+    def from_dict(ticket_dict):
         ticket = Ticket()
         ticket.id = ticket_dict["id"]
         ticket.from_id = ticket_dict["from_id"]

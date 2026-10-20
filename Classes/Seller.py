@@ -29,7 +29,7 @@ class Seller(User):
         return MySQLProgramQueries.delete_seller_product_query(product_id, seller_id)
 
     @classmethod
-    def from_data(cls, data):
+    def from_dict(cls, data):
         seller = cls()
         seller.id = data["id"]
         seller.firstname = data["firstname"]

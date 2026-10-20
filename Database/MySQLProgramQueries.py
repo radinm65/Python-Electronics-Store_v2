@@ -210,6 +210,21 @@ class MySQLProgramQueries:
             cursor.close()
 
     @staticmethod
+    def get_customer_byID_query(customer_id):
+        query = """
+            SELECT * FROM customers
+            WHERE id = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (customer_id))
+
+        try:
+            customers = cursor.fetchone()
+            return customers
+        finally:
+            cursor.close()
+
+    @staticmethod
     def delete_customer_query(customer_id):
         query = """
             DELETE FROM customers

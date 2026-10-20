@@ -82,7 +82,7 @@ class Customer(User):
         
 
     @staticmethod
-    def from_database(data):
+    def from_dict(data):
         customer = Customer()
         customer.id = data["id"]
         customer.firstname = data["firstname"]

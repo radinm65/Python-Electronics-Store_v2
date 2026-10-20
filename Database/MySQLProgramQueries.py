@@ -36,7 +36,7 @@ class MySQLProgramQueries:
     # Seller queries /////////////////////////////
 
     @staticmethod
-    def save_seller_query(
+    def add_seller_query(
         firstname, lastname, username, password, age, phone_num, address, balance
     ):
         query = """
@@ -125,7 +125,7 @@ class MySQLProgramQueries:
             cursor.close()
 
     @staticmethod
-    def get_pending_products_query(seller_id):
+    def get_Seller_pending_products_query(seller_id):
         query = """
             SELECT
                 p.*,
@@ -254,6 +254,25 @@ class MySQLProgramQueries:
             cursor.close()
 
     @staticmethod
+    def get_customer_balance_query(customer_id):
+        query = """
+            SELECT balance
+            FROM customers
+            WHERE id = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (customer_id,))
+
+        try:
+            result = cursor.fetchone()
+            return result["balance"] if result else None
+        finally:
+            cursor.close()
+            
+            
+    # Cart Item queries /////////////////////////////
+
+    @staticmethod
     def add_cart_item_query(customer_id, product_id):
         query = """
             INSERT INTO cart_items (customer_id, product_id)
@@ -279,9 +298,29 @@ class MySQLProgramQueries:
             return cursor.rowcount > 0
         finally:
             cursor.close()
+            
+            
+    @staticmethod
+    def get_customer_cart_total_price_query(customer_id):
+        query = """
+            SELECT COALESCE(SUM(p.price), 0) AS total_price
+            FROM cart_items AS ci
+            JOIN products AS p
+                ON ci.product_id = p.id
+            WHERE ci.customer_id = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, (customer_id,))
+
+        try:
+            result = cursor.fetchone()
+            return result["total_price"]
+        finally:
+            cursor.close()
+
 
     @staticmethod
-    def delete_customer_cart_item_query(cart_item_id, customer_id):
+    def delete_cart_item_query(cart_item_id, customer_id):
         query = """
             DELETE FROM cart_items
             WHERE id = %s
@@ -335,6 +374,35 @@ class MySQLProgramQueries:
             return cursor.rowcount > 0
         finally:
             cursor.close()
+            
+
+    @staticmethod
+    def add_cart_total_to_sellers_balance_query(customer_id):
+        query = """
+            UPDATE sellers AS s
+            JOIN (
+                SELECT
+                    p.seller_id,
+                    SUM(p.price) AS total_amount
+                FROM cart_items AS ci
+                JOIN products AS p
+                    ON ci.product_id = p.id
+                WHERE ci.customer_id = %s
+                GROUP BY p.seller_id
+            ) AS seller_totals
+                ON s.id = seller_totals.seller_id
+            SET s.balance = s.balance + seller_totals.total_amount
+        """
+
+        cursor = MySQLcommands.execute_query(query, (customer_id,))
+
+        try:
+            return cursor.rowcount
+        finally:
+            cursor.close()
+        
+        
+    # Favorites queries /////////////////////////////
 
     @staticmethod
     def add_customer_favorites_query(customer_id, product_id):

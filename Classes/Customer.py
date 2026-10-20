@@ -1,197 +1,90 @@
 from Classes.User import User
 from Classes.Product import Product
 from Classes.CustomerEmployee import CustomerEmployee
-from IDGenerator import customer_id_generator
-from FileCommands import FileCommands
+from Database.MySQLProgramQueries import MySQLProgramQueries
 from datetime import datetime
 
 
 class Customer(User):
     def __init__(self):
         super().__init__()
-        self.id = customer_id_generator.next_id()
-        self.cart = None
-        self.favorites = None
-        self.bought = None
+        self.id = None
 
     def save(self):
-        new_customer = {
-            "id": self.id,
-            "firstname": self.firstname,
-            "lastname": self.lastname,
-            "username": self.username,
-            "password": self.password,
-            "age": self.age,
-            "phone_num": self.phone_num,
-            "address": self.address,
-            "balance": self.balance,
-            "cart": self.cart,
-            "favorites": self.favorites,
-            "bought": self.bought,
-        }
-        return FileCommands.add_data("./Database/Customers.json", new_customer)
-
+        return MySQLProgramQueries.add_customer_query(
+            self.firstname,
+            self.lastname,
+            self.username,
+            self.password,
+            self.age,
+            self.phone_num,
+            self.address,
+            self.balance,
+        )
 
 
     def add_to_cart(self, product_id):
-        product = Product.get_product_byID(product_id)
+        return MySQLProgramQueries.add_cart_item_query(self.id, product_id)
 
-        if product is None:
-            raise ValueError("Product not found.")
-
-        customers = CustomerEmployee.get_customers()
-
-        for customer in customers:
-            if customer["id"] == self.id:
-
-                if product_id in customer["cart"]:
-                    raise ValueError("Already in cart.")
-
-                customer["cart"].append(product_id)
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json", customers
-                )
-        return False
 
     def add_to_favorites(self, product_id):
+        return MySQLProgramQueries.add_customer_favorites_query(self.id, product_id)
 
-        product = Product.get_product_byID(product_id)
-
-        if product is None:
-            raise ValueError("Product not found.")
-
-        customers = CustomerEmployee.get_customers()
-        for customer in customers:
-            if customer["id"] == self.id:
-
-                if product_id in customer["favorites"]:
-                    raise ValueError("Already in favorites.")
-
-                customer["favorites"].append(product_id)
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json", customers
-                )
-        return False
 
     def remove_from_favorites(self, product_id):
-        customers = CustomerEmployee.get_customers()
+        return MySQLProgramQueries.delete_customer_favorite_query(self.id, product_id)
 
-        for customer in customers:
-            if customer["id"] == self.id:
-
-                if product_id not in customer["favorites"]:
-                    raise ValueError("Product is not in favorites.")
-
-                customer["favorites"].remove(product_id)
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json", customers
-                )
-        return False
 
     def remove_from_cart(self, product_id):
-        customers = CustomerEmployee.get_customers()
+        return MySQLProgramQueries.delete_cart_item_query(self.id, product_id)
 
-        for customer in customers:
-            if customer["id"] == self.id:
-
-                if product_id not in customer["cart"]:
-                    raise ValueError("Product is not in cart.")
-
-                customer["cart"].remove(product_id)
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json", customers
-                )
-        return False
 
     def checkout(self):
-        customers = CustomerEmployee.get_customers()
-        for customer in customers:
-            if customer["id"] == self.id:
-                if len(customer["cart"]) == 0:
-                    raise ValueError("Cart is empty.")
-                sellers = FileCommands.get_file_data("./Database/Sellers.json")
-                purchase_date = datetime.today().isoformat()
-                total_price = 0
-                
-                for product_id in customer["cart"]:
-                    product = Product.get_product_byID(product_id)
-                    if product is None:
-                        continue
-                    total_price += product["price"]
-                if total_price > customer["balance"]:
-                    raise ValueError("Not enough balance.")
-                # خرید انجام شود
-                for product_id in customer["cart"]:
-                    product = Product.get_product_byID(product_id)
-                    if product is None:
-                        continue
-                    customer["bought"].append(
-                        {"product_id": product_id, "date": purchase_date}
-                    )
-                    # پیدا کردن فروشنده
-                    for seller in sellers:
-                        if seller["id"] == product["seller_id"]:
-                            seller["balance"] += product["price"]
-                            seller["sold"].append(
-                                {"product_id": product_id, "date": purchase_date}
-                            )
-                            break
-                customer["balance"] -= total_price
-                # خالی کردن سبد
-                customer["cart"].clear()
-                FileCommands.save_file_data("./Database/Sellers.json", sellers)
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json", customers
-                )
-        return False
+        customer_cart_items = MySQLProgramQueries.get_customer_cart_items_query(self.id)
+
+        if len(customer_cart_items) == 0:
+            raise ValueError("Cart is empty.")
+
+        total_price = MySQLProgramQueries.get_customer_cart_total_price_query(self.id)
+
+        if total_price > self.balance:
+            raise ValueError("Not enough balance.")
+
+        customer_cart_items_tuple = [
+            (item["customer_id"], item["product_id"]) for item in customer_cart_items
+        ]
+
+        MySQLProgramQueries.add_cart_items_to_sales_query(customer_cart_items_tuple)
+
+        MySQLProgramQueries.add_cart_total_to_sellers_balance_query(self.id)
+        
+        customer_balance = MySQLProgramQueries.get_customer_balance_query()
+        
+        customer_balance_set_amount = customer_balance - total_price
+        
+        MySQLProgramQueries.set_customer_balance_query(customer_balance_set_amount, self.id)
+        
+        MySQLProgramQueries.delete_all_customer_cart_items_query(self.id)
 
 
-    @staticmethod
-    def add_favorites_to_cart(customer_id):
 
-        customers = CustomerEmployee.get_customers()
+    def add_favorites_to_cart(self):
+        customer_favorites = MySQLProgramQueries.get_customer_favorites_query(self.id)
+        
+        if len(customer_favorites) == 0:
+            raise ValueError("Favorites is empty.")
+        
+        MySQLProgramQueries.delete_all_customer_favorites_query(self.id)
+        
+        return MySQLProgramQueries.add_many_cart_item_query(customer_favorites)
 
-        for customer in customers:
 
-            if customer["id"] == customer_id:
-
-                if len(customer["favorites"]) == 0:
-                    raise ValueError("Favorites is empty.")
-
-                for product_id in customer["favorites"]:
-
-                    if product_id not in customer["cart"]:
-                        customer["cart"].append(product_id)
-
-                customer["favorites"] = []
-
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json",
-                    customers
-                )
-
-        return False
+    def change_balance(self, new_balance):
+        return MySQLProgramQueries.set_customer_balance_query(new_balance, self.id)
+        
 
     @staticmethod
-    def change_balance(customer_id, new_balance):
-
-        customers = CustomerEmployee.get_customers()
-
-        for customer in customers:
-
-            if customer["id"] == customer_id:
-
-                customer["balance"] = new_balance
-
-                return FileCommands.save_file_data(
-                    "./Database/Customers.json",
-                    customers
-                )
-
-        return False
-
-    @staticmethod
-    def from_dict(data):
+    def from_database(data):
         customer = Customer()
         customer.id = data["id"]
         customer.firstname = data["firstname"]
@@ -202,10 +95,6 @@ class Customer(User):
         customer.phone_num = data["phone_num"]
         customer.address = data["address"]
         customer.balance = data["balance"]
-        customer.cart = data["cart"]
-        customer.favorites = data["favorites"]
-        customer.bought = data["bought"]
-
         return customer
 
     def __str__(self):
@@ -218,7 +107,4 @@ class Customer(User):
             f"Phone_num: {self.phone_num}\n"
             f"Address: {self.address}\n"
             f"Balance: {self.balance}\n"
-            f"Cart: {self.cart}\n"
-            f"Favorites: {self.favorites}\n"
-            f"Bought: {self.bought}\n"
         )

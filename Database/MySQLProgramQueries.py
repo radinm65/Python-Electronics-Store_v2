@@ -181,7 +181,7 @@ class MySQLProgramQueries:
     @staticmethod
     def delete_seller_product_query(product_id, seller_id):
         query = """
-            DELETE FROM PRODUCTS
+            DELETE FROM products
             WHERE id = %s
                 AND seller_id = %s;
         """
@@ -216,7 +216,7 @@ class MySQLProgramQueries:
             WHERE id = %s
         """
 
-        cursor = MySQLcommands.execute_query(query, (customer_id))
+        cursor = MySQLcommands.execute_query(query, (customer_id,))
 
         try:
             customers = cursor.fetchone()
@@ -741,8 +741,33 @@ class MySQLProgramQueries:
             raise ValueError("status is invalid.")
 
         query = """
-            SELECT * from products
-            WHERE status = %s
+            SELECT
+                p.*,
+
+                c.resolution_mp,
+                c.zoom_factor,
+                c.sensor_type,
+
+                l.ram_gb AS laptop_ram_gb,
+                l.storage_gb AS laptop_storage_gb,
+                l.cpu,
+
+                ph.ram_gb AS phone_ram_gb,
+                ph.storage_gb AS phone_storage_gb,
+                ph.battery_mah
+
+            FROM products AS p
+
+            LEFT JOIN cameras AS c
+                ON p.id = c.product_id
+
+            LEFT JOIN laptops AS l
+                ON p.id = l.product_id
+
+            LEFT JOIN phones AS ph
+                ON p.id = ph.product_id
+
+            WHERE p.status = %s
         """
 
         cursor = MySQLcommands.execute_query(query, (status,))
@@ -756,15 +781,40 @@ class MySQLProgramQueries:
     def get_product_byID_query(product_id):
 
         query = """
-            SELECT * from products
-            WHERE status = %s
-                AND id = %s
+            SELECT
+                p.*,
+
+                c.resolution_mp,
+                c.zoom_factor,
+                c.sensor_type,
+
+                l.ram_gb AS laptop_ram_gb,
+                l.storage_gb AS laptop_storage_gb,
+                l.cpu,
+
+                ph.ram_gb AS phone_ram_gb,
+                ph.storage_gb AS phone_storage_gb,
+                ph.battery_mah
+
+            FROM products AS p
+
+            LEFT JOIN cameras AS c
+                ON p.id = c.product_id
+
+            LEFT JOIN laptops AS l
+                ON p.id = l.product_id
+
+            LEFT JOIN phones AS ph
+                ON p.id = ph.product_id
+
+            WHERE p.status = %s
+                AND p.id = %s
         """
 
         cursor = MySQLcommands.execute_query(query, ("approved",product_id))
 
         try:
-            return cursor.fetchall()
+            return cursor.fetchone()
         finally:
             cursor.close()
 

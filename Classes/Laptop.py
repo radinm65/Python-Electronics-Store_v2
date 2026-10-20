@@ -51,6 +51,9 @@ class Laptop(Product):
     def cpu(self, new_cpu):
         if len(new_cpu) < 2:
             raise ValueError("CPU should be longer than 2 characters.")
+
+        if len(new_cpu) > 30:
+            raise ValueError("CPU can't be longer than 30 characters.")
         self.__cpu = new_cpu
 
     def extra_fields(self):
@@ -71,6 +74,7 @@ class Laptop(Product):
         laptop.ram_gb = product_data["ram_gb"]
         laptop.storage_gb = product_data["storage_gb"]
         laptop.cpu = product_data["cpu"]
+        laptop.date_created = product_data["date_created"]
 
         return laptop
 

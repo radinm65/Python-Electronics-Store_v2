@@ -214,7 +214,7 @@ class MySQLcommands:
                     from_id INT NOT NULL,
                     sender_type ENUM('customer', 'seller') NOT NULL,
                     request TEXT NOT NULL,
-                    response TEXT NOT NULL DEFAULT '',
+                    response TEXT NOT NULL DEFAULT (''),
                     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     
                     INDEX idx_sender (sender_type, from_id)

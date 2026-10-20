@@ -21,8 +21,8 @@ class Employee(Person):
         if not value.isdigit():
             raise ValueError("Bank account must contain only numbers.")
 
-        if len(value) < 10:
-            raise ValueError("Bank account number is too short.")
+        if len(value) != 16:
+            raise ValueError("Bank account number must have 16 digits.")
 
         self.__bank_account_num = value
 

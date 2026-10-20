@@ -14,28 +14,10 @@ class SellerManager(Manager):
         if amount <= 0:
             raise ValueError("Raise amount must be greater than zero.")
 
-        seller_employees = SellerManager.get_seller_employees()
-        for se in seller_employees:
-            if se["id"] == seller_employee_id:
-                se["salary"] += amount
-                return SellerManager.save_seller_employees(seller_employees)
-        return False
+        return MySQLProgramQueries.raise_employee_salary_query(amount, seller_employee_id, "seller_employee")
 
     @staticmethod
     def hire_employee(new_employee):
-        json_employee = {
-            "id": new_employee.id,
-            "firstname": new_employee.firstname,
-            "lastname": new_employee.lastname,
-            "username": new_employee.username,
-            "password": new_employee.password,
-            "age": new_employee.age,
-            "phone_num": new_employee.phone_num,
-            "address": new_employee.address,
-            "bank_account_num": new_employee.bank_account_num,
-            "date_hired": new_employee.date_hired.isoformat(),
-            "salary": new_employee.salary,
-        }
         return MySQLProgramQueries.add_employee_query(
             new_employee.firstname,
             new_employee.lastname,
@@ -59,7 +41,7 @@ class SellerManager(Manager):
 
     @staticmethod
     def get_seller_employee_byID(seller_employee_id):
-        return MySQLProgramQueries.get_approved_seller_query(seller_employee_id)
+        return MySQLProgramQueries.get_employee_query(seller_employee_id, "seller_employee")
 
     # @staticmethod
     # def check_employee_byID(emp_id):

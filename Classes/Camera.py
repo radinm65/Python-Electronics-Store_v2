@@ -20,12 +20,12 @@ class Camera(Product):
     @resolution_mp.setter
     def resolution_mp(self, new_resolution_mp):
         try:
-            new_resolution_mp = float(new_resolution_mp)
+            new_resolution_mp = int(new_resolution_mp)
         except ValueError:
-            raise ValueError("Resolution must be numeric.")
+            raise ValueError("Resolution must be a whole number.")
 
-        if not (0.1 <= new_resolution_mp <= 200):
-            raise ValueError("Resolution (MP) must be between 0.1 and 200.")
+        if not (1 <= new_resolution_mp <= 200):
+            raise ValueError("Resolution (MP) must be between 1 and 200.")
         self.__resolution_mp = new_resolution_mp
 
     @property
@@ -35,9 +35,9 @@ class Camera(Product):
     @zoom_factor.setter
     def zoom_factor(self, new_zoom_factor):
         try:
-            new_zoom_factor = float(new_zoom_factor)
+            new_zoom_factor = int(new_zoom_factor)
         except ValueError:
-            raise ValueError("Zoom factor must be numeric.")
+            raise ValueError("Zoom factor must be a whole number.")
 
         if not (1 <= new_zoom_factor <= 100):
             raise ValueError("Zoom factor must be between 1 and 100.")
@@ -51,6 +51,9 @@ class Camera(Product):
     def sensor_type(self, new_sensor_type):
         if len(new_sensor_type) < 2:
             raise ValueError("Sensor type should be longer than 2 characters.")
+
+        if len(new_sensor_type) > 15:
+            raise ValueError("Sensor type can't be longer than 15 characters.")
         self.__sensor_type = new_sensor_type
 
 
@@ -72,6 +75,7 @@ class Camera(Product):
         camera.resolution_mp = product_data["resolution_mp"]
         camera.zoom_factor = product_data["zoom_factor"]
         camera.sensor_type = product_data["sensor_type"]
+        camera.date_created = product_data["date_created"]
 
         return camera
 

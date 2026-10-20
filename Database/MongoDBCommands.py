@@ -12,22 +12,22 @@ class MongoDBCommands:
         return MongoDBCommands._db
     
     def insert_document(self, document):
-        collection = self.db["reviews"]
+        collection = MongoDBCommands.connect_to_mongodb()["reviews"]
         result = collection.insert_one(document)
         return result.inserted_id
 
     def find_documents(self, query):
-        collection = self.db["reviews"]
+        collection = MongoDBCommands.connect_to_mongodb()["reviews"]
         documents = collection.find(query)
         return list(documents)
 
     def update_document(self, query, update):
-        collection = self.db["reviews"]
+        collection = MongoDBCommands.connect_to_mongodb()["reviews"]
         result = collection.update_one(query, {'$set': update})
         return result.modified_count
 
     def delete_document(self, query):
-        collection = self.db["reviews"]
+        collection = MongoDBCommands.connect_to_mongodb()["reviews"]
         result = collection.delete_one(query)
         return result.deleted_count
     

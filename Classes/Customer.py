@@ -22,19 +22,53 @@ class Customer(User):
 
 
     def add_to_cart(self, product_id):
+        product = MySQLProgramQueries.get_product_byID_query(product_id)
+
+        if product is None:
+            raise ValueError("Product not found.")
+
+        customer_cart_items = MySQLProgramQueries.get_customer_cart_items_query(self.id)
+
+        for item in customer_cart_items:
+            if item["product_id"] == product_id:
+                raise ValueError("Already in cart.")
+
         return MySQLProgramQueries.add_cart_item_query(self.id, product_id)
 
 
     def add_to_favorites(self, product_id):
+        product = MySQLProgramQueries.get_product_byID_query(product_id)
+
+        if product is None:
+            raise ValueError("Product not found.")
+
+        customer_favorites = MySQLProgramQueries.get_customer_favorites_query(self.id)
+
+        for favorite in customer_favorites:
+            if favorite["product_id"] == product_id:
+                raise ValueError("Already in favorites.")
+
         return MySQLProgramQueries.add_customer_favorites_query(self.id, product_id)
 
 
     def remove_from_favorites(self, product_id):
-        return MySQLProgramQueries.delete_customer_favorite_query(self.id, product_id)
+        customer_favorites = MySQLProgramQueries.get_customer_favorites_query(self.id)
+
+        for favorite in customer_favorites:
+            if favorite["product_id"] == product_id:
+                return MySQLProgramQueries.delete_customer_favorite_query(favorite["id"], self.id)
+
+        raise ValueError("Product is not in favorites.")
 
 
     def remove_from_cart(self, product_id):
-        return MySQLProgramQueries.delete_cart_item_query(self.id, product_id)
+        customer_cart_items = MySQLProgramQueries.get_customer_cart_items_query(self.id)
+
+        for item in customer_cart_items:
+            if item["product_id"] == product_id:
+                return MySQLProgramQueries.delete_cart_item_query(item["id"], self.id)
+
+        raise ValueError("Product is not in cart.")
 
 
     def checkout(self):
@@ -45,7 +79,9 @@ class Customer(User):
 
         total_price = MySQLProgramQueries.get_customer_cart_total_price_query(self.id)
 
-        if total_price > self.balance:
+        customer_balance = MySQLProgramQueries.get_customer_balance_query(self.id)
+
+        if total_price > customer_balance:
             raise ValueError("Not enough balance.")
 
         customer_cart_items_tuple = [
@@ -55,9 +91,7 @@ class Customer(User):
         MySQLProgramQueries.add_cart_items_to_sales_query(customer_cart_items_tuple)
 
         MySQLProgramQueries.add_cart_total_to_sellers_balance_query(self.id)
-        
-        customer_balance = MySQLProgramQueries.get_customer_balance_query()
-        
+
         customer_balance_set_amount = customer_balance - total_price
         
         MySQLProgramQueries.set_customer_balance_query(customer_balance_set_amount, self.id)
@@ -72,13 +106,34 @@ class Customer(User):
         if len(customer_favorites) == 0:
             raise ValueError("Favorites is empty.")
         
-        MySQLProgramQueries.delete_all_customer_favorites_query(self.id)
-        
-        return MySQLProgramQueries.add_many_cart_item_query(customer_favorites)
+        customer_cart_items = MySQLProgramQueries.get_customer_cart_items_query(self.id)
+
+        cart_product_ids = [item["product_id"] for item in customer_cart_items]
+
+        new_cart_items = [
+            (self.id, favorite["product_id"])
+            for favorite in customer_favorites
+            if favorite["product_id"] not in cart_product_ids
+        ]
+
+        if len(new_cart_items) > 0:
+            MySQLProgramQueries.add_many_cart_item_query(new_cart_items)
+
+        return MySQLProgramQueries.delete_all_customer_favorites_query(self.id)
 
 
     def change_balance(self, new_balance):
         return MySQLProgramQueries.set_customer_balance_query(new_balance, self.id)
+
+
+    @staticmethod
+    def get_cart_items(customer_id):
+        return MySQLProgramQueries.get_customer_cart_items_query(customer_id)
+
+
+    @staticmethod
+    def get_favorites(customer_id):
+        return MySQLProgramQueries.get_customer_favorites_query(customer_id)
         
 
     @staticmethod

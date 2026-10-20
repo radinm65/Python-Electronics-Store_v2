@@ -40,6 +40,10 @@ class Ticket:
     def date_created(self):
         return self.__date_created
 
+    @date_created.setter
+    def date_created(self, new_date_created):
+        self.__date_created = new_date_created
+
     @property
     def sender_type(self):
         return self.__sender_type
@@ -88,6 +92,7 @@ class Ticket:
         ticket.request = ticket_dict["request"]
         ticket.sender_type = ticket_dict["sender_type"]
         ticket.response = ticket_dict.get("response", "")
+        ticket.date_created = ticket_dict["date_created"]
 
         return ticket
 

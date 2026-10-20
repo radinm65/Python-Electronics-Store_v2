@@ -19,6 +19,11 @@ class Product(ABC):
             raise ValueError(
                 "Product name should be longer than 3 characters."
             )
+
+        if len(new_name) > 100:
+            raise ValueError(
+                "Product name can't be longer than 100 characters."
+            )
         self.__name = new_name
 
     @property
@@ -30,6 +35,11 @@ class Product(ABC):
         if len(new_brand) < 3:
             raise ValueError(
                 "Brand should be longer than 3 characters."
+            )
+
+        if len(new_brand) > 50:
+            raise ValueError(
+                "Brand can't be longer than 50 characters."
             )
 
         if any(char.isdigit() for char in new_brand):
@@ -45,10 +55,10 @@ class Product(ABC):
     @price.setter
     def price(self, new_price):
         try:
-            new_price = float(new_price)
+            new_price = int(new_price)
         except ValueError:
             raise ValueError(
-                "Price must be numeric."
+                "Price must be a whole number."
             )
 
         if new_price <= 0:
@@ -66,12 +76,16 @@ class Product(ABC):
     def date_created(self):
         return self.__date_created
 
+    @date_created.setter
+    def date_created(self, new_date_created):
+        self.__date_created = new_date_created
+
     def save(self):
         extra_fields = self.extra_fields()
-        return MySQLProgramQueries.add_product_query(self.seller_id,self.name, self.brand, self.price, self.categoryو *extra_fields.values())
+        return MySQLProgramQueries.add_product_query(self.seller_id,self.name, self.brand, self.price, self.category.lower(), *extra_fields.values())
 
     @staticmethod
-    def get_approved_products(product_id):
+    def get_approved_products():
         return MySQLProgramQueries.get_products_query("approved")
     
     @staticmethod

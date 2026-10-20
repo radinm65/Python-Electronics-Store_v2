@@ -22,6 +22,9 @@ class Person(ABC):
         if len(new_firstname) < 3:
             raise ValueError("Firstname can't be shorter than 3 characters.")
 
+        if len(new_firstname) > 20:
+            raise ValueError("Firstname can't be longer than 20 characters.")
+
         if any(char.isdigit() for char in new_firstname):
             raise ValueError("Firstname shouldn't have numbers.")
 
@@ -36,6 +39,9 @@ class Person(ABC):
         if len(new_lastname) < 3:
             raise ValueError("Lastname can't be shorter than 3 characters.")
 
+        if len(new_lastname) > 20:
+            raise ValueError("Lastname can't be longer than 20 characters.")
+
         if any(char.isdigit() for char in new_lastname):
             raise ValueError("Lastname shouldn't have numbers.")
 
@@ -49,6 +55,9 @@ class Person(ABC):
     def username(self, value):
         if len(value) < 5:
             raise ValueError("Username can't be shorter than 5 characters.")
+
+        if len(value) > 20:
+            raise ValueError("Username can't be longer than 20 characters.")
 
         if not any(char.isdigit() for char in value):
             raise ValueError("Username should have numbers.")
@@ -115,6 +124,9 @@ class Person(ABC):
         if len(value) < 10:
             raise ValueError("Address is too short.")
 
+        if len(value) > 50:
+            raise ValueError("Address is too long.")
+
         self.__address = value
 
     def get_hash_Password(password):
@@ -123,12 +135,17 @@ class Person(ABC):
     @staticmethod
     def check_login(input_username, input_password, role):
         hashed_password = hashlib.sha256(input_password.encode()).hexdigest()
-        user, has_users = MySQLProgramQueries.check_login_query(input_username, hashed_password, role)
+        if role in ("customer_employee", "seller_employee"):
+            query_role = "employee"
+        else:
+            query_role = role
+
+        user, has_users = MySQLProgramQueries.check_login_query(input_username, hashed_password, query_role)
 
         if not has_users:
             raise ValueError("No users of this type have been registered yet")
         
-        if user:
+        if user and (query_role != "employee" or user["role"] == role):
             return True, user
 
         return False, None

@@ -77,6 +77,7 @@ class Phone(Product):
         phone.ram_gb = product_data["ram_gb"]
         phone.storage_gb = product_data["storage_gb"]
         phone.battery_mah = product_data["battery_mah"]
+        phone.date_created = product_data["date_created"]
 
         return phone
 

@@ -1,15 +1,13 @@
-from abc import ABC, abstractmethod
-from datetime import datetime
-from FileCommands import FileCommands
-from IDGenerator import product_id_generator
+from abc import ABC
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 
 class Product(ABC):
 
     def __init__(self):
-        self.id = product_id_generator.next_id()
+        self.id = None
         self.seller_id = None
-        self.__date_created = datetime.today()
+        self.__date_created = None
 
     @property
     def name(self):
@@ -69,27 +67,22 @@ class Product(ABC):
         return self.__date_created
 
     def save(self):
-        new_product = {
-            "id": self.id,
-            "name": self.name,
-            "brand": self.brand,
-            "price": self.price,
-            "category": self.category,
-            "seller_id": self.seller_id,
-            "date_created": self.date_created.isoformat(),
-        }
-        new_product.update(self.extra_fields())
-        return FileCommands.add_data("./Database/UnapprovedProducts.json", new_product)
+        extra_fields = self.extra_fields()
+        return MySQLProgramQueries.add_product_query(self.seller_id,self.name, self.brand, self.price, self.categoryو *extra_fields.values())
 
     @staticmethod
+    def get_approved_products(product_id):
+        return MySQLProgramQueries.get_products_query("approved")
+    
+    @staticmethod
     def get_product_byID(product_id):
-        from Classes.Phone import Phone
-        from Classes.Laptop import Laptop
-        from Classes.Camera import Camera
-
-        product = Phone.get_product_byID(product_id)
-        if product is None:
-            product = Laptop.get_product_byID(product_id)
-        if product is None:
-            product = Camera.get_product_byID(product_id)
-        return product
+        return MySQLProgramQueries.get_product_byID_query(product_id)
+    
+    @staticmethod
+    def edit_product(product_id, name, brand, price, field1, field2, field3):
+        return MySQLProgramQueries.edit_product_query(product_id, name, brand, price, field1, field2, field3)
+    
+    
+    @staticmethod
+    def remove_product(product_id):
+        return MySQLProgramQueries.delete_product_query(product_id) 

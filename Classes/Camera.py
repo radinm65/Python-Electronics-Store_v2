@@ -1,6 +1,5 @@
 from Classes.Product import Product
-from FileCommands import FileCommands
-
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 class Camera(Product):
 
@@ -76,23 +75,7 @@ class Camera(Product):
 
         return camera
 
-    @staticmethod
-    def get_approved_products():
-        return FileCommands.get_file_data("./Database/ApprovedCameras.json")
 
-    @staticmethod
-    def get_product_byID(product_id):
-        return next(
-            (p for p in Camera.get_approved_products() if p["id"] == product_id), None
-        )
-
-    @staticmethod
-    def edit_product(json_product):
-        return FileCommands.edit_data("./Database/ApprovedCameras.json", json_product)
-
-    @staticmethod
-    def remove_product(product_id):
-        return FileCommands.delete_data("./Database/ApprovedCameras.json", product_id)
 
     def __str__(self):
         return (

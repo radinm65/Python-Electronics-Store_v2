@@ -753,6 +753,22 @@ class MySQLProgramQueries:
             cursor.close()
 
     @staticmethod
+    def get_product_byID_query(product_id):
+
+        query = """
+            SELECT * from products
+            WHERE status = %s
+                AND id = %s
+        """
+
+        cursor = MySQLcommands.execute_query(query, ("approved",product_id))
+
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    @staticmethod
     def approve_product_query(product_id):
         query = """
             UPDATE products

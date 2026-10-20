@@ -1,5 +1,4 @@
 from Classes.Product import Product
-from FileCommands import FileCommands
 
 
 class Laptop(Product):
@@ -75,23 +74,6 @@ class Laptop(Product):
 
         return laptop
 
-    @staticmethod
-    def get_approved_products():
-        return FileCommands.get_file_data("./Database/ApprovedLaptops.json")
-
-    @staticmethod
-    def get_product_byID(product_id):
-        return next(
-            (p for p in Laptop.get_approved_products() if p["id"] == product_id), None
-        )
-
-    @staticmethod
-    def edit_product(json_product):
-        return FileCommands.edit_data("./Database/ApprovedLaptops.json", json_product)
-
-    @staticmethod
-    def remove_product(product_id):
-        return FileCommands.delete_data("./Database/ApprovedLaptops.json", product_id)
 
     def __str__(self):
         return (

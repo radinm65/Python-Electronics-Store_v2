@@ -1,6 +1,4 @@
 from Classes.User import User
-from Classes.Product import Product
-from Classes.Ticket import Ticket
 from Database.MySQLProgramQueries import MySQLProgramQueries
 
 

@@ -1,8 +1,7 @@
 from abc import ABC
 import re
 import hashlib
-from FileCommands import FileCommands
-
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 class Person(ABC):
     def __init__(self):
@@ -122,14 +121,14 @@ class Person(ABC):
         return hashlib.sha256(password.encode()).hexdigest()
 
     @staticmethod
-    def check_login(file_path, input_username, input_password):
+    def check_login(input_username, input_password, role):
         hashed_password = hashlib.sha256(input_password.encode()).hexdigest()
-        get_users = FileCommands.get_file_data(file_path)
+        user, has_users = MySQLProgramQueries.check_login_query(input_username, hashed_password, role)
 
-        if len(get_users) == 0:
+        if not has_users:
             raise ValueError("No users of this type have been registered yet")
-        for user in get_users:
-            if hashed_password == user["password"] and input_username == user["username"]:
-                return True, user
+        
+        if user:
+            return True, user
 
         return False, None

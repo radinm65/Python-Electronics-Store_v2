@@ -1,6 +1,4 @@
 from Classes.User import User
-from Classes.Product import Product
-from Classes.CustomerEmployee import CustomerEmployee
 from Database.MySQLProgramQueries import MySQLProgramQueries
 from datetime import datetime
 

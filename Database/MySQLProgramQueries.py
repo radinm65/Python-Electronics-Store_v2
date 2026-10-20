@@ -22,14 +22,29 @@ class MySQLProgramQueries:
         query = f"""
             SELECT *
             FROM {table}
+            LIMIT 1
+        """
+        
+        cursor = MySQLcommands.execute_query(query, commit=False)
+        
+        try:
+            has_users = cursor.fetchone() is not None   
+        finally:
+            cursor.close()
+        
+        query = f"""
+            SELECT *
+            FROM {table}
             WHERE username = %s
                 AND password = %s
+                
+            LIMIT 1
         """
 
         cursor = MySQLcommands.execute_query(query, (username, password))
 
         try:
-            return cursor.fetchone()
+            return cursor.fetchone(), has_users
         finally:
             cursor.close()
 

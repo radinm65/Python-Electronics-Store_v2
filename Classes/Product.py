@@ -32,10 +32,6 @@ class Product(ABC):
 
     @brand.setter
     def brand(self, new_brand):
-        if len(new_brand) < 3:
-            raise ValueError(
-                "Brand should be longer than 3 characters."
-            )
 
         if len(new_brand) > 50:
             raise ValueError(

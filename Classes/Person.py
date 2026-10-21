@@ -145,7 +145,9 @@ class Person(ABC):
 
         user, has_users = MySQLProgramQueries.check_login_query(input_username, hashed_password, query_role)
 
-        if not has_users:
+        # Customers and sellers can sign up, so an empty table is not an error
+        # for them; the caller offers signup when login fails.
+        if not has_users and role not in ("customer", "seller"):
             raise ValueError("No users of this type have been registered yet")
         
         if user and (query_role != "employee" or user["role"] == role):

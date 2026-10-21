@@ -1,7 +1,10 @@
+import os
+
 import mysql.connector
 
 
 class MySQLcommands:
+    DATABASE_NAME = "electronic_store"
     _connection = None
 
     @staticmethod
@@ -10,9 +13,24 @@ class MySQLcommands:
             MySQLcommands._connection is None
             or not MySQLcommands._connection.is_connected()
         ):
-            MySQLcommands._connection = mysql.connector.connect(
-                host="localhost", user="root", port=3306
+            connection = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                port=3306,
+                password= "radinian123",
             )
+
+            cursor = connection.cursor()
+            try:
+                cursor.execute(
+                    f"CREATE DATABASE IF NOT EXISTS {MySQLcommands.DATABASE_NAME}"
+                )
+            finally:
+                cursor.close()
+
+            # A fresh connection has no database selected, so select it here.
+            connection.database = MySQLcommands.DATABASE_NAME
+            MySQLcommands._connection = connection
         return MySQLcommands._connection
 
     @staticmethod
@@ -23,8 +41,10 @@ class MySQLcommands:
         
         try:
         
-            cursor.execute("CREATE DATABASE IF NOT EXISTS electronic_store")
-            cursor.execute("USE electronic_store")
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS {MySQLcommands.DATABASE_NAME}"
+            )
+            cursor.execute(f"USE {MySQLcommands.DATABASE_NAME}")
 
             cursor.execute(
                 """
@@ -231,7 +251,9 @@ class MySQLcommands:
     @staticmethod
     def execute_query(query, params=None, commit=True):
         connection = MySQLcommands.connect_to_mysql()
-        cursor = connection.cursor(dictionary=True)
+        # Buffered, so SELECT rows are fetched before commit() runs
+        # (an unbuffered cursor makes commit() raise "Unread result found").
+        cursor = connection.cursor(dictionary=True, buffered=True)
 
         try:
             cursor.execute(query, params)

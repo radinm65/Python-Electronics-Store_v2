@@ -1,5 +1,6 @@
 from abc import ABC
 from Database.MySQLProgramQueries import MySQLProgramQueries
+from Database.MongoDBCommands import MongoDBCommands
 
 
 class Product(ABC):
@@ -96,3 +97,13 @@ class Product(ABC):
     @staticmethod
     def remove_product(product_id):
         return MySQLProgramQueries.delete_product_query(product_id) 
+
+
+    @staticmethod
+    def post_review(product_id, name, review):
+        return MongoDBCommands.insert_document({"product_id": product_id, "name": name, "review": review})
+    
+    @staticmethod
+    def find_reviews(product_id):
+        return MongoDBCommands.find_documents({"product_id": product_id})
+    

@@ -14,6 +14,7 @@ from Classes.Camera import Camera
 from Classes.Ticket import Ticket
 from Report import Report
 from Database.MySQLCommands import MySQLcommands
+from Database.MySQLProgramQueries import MySQLProgramQueries
 
 
 def print_error(message):
@@ -70,7 +71,8 @@ def show_customer_shop_menu():
         "7- Delete From Favorites\n"
         "8- See Cart and Favorites\n"
         "9- Add to balance\n"
-        "10- Back\n",
+        "10- Post review on a product\n"
+        "11- Back\n",
         colorama.Fore.WHITE,
     )
 
@@ -492,7 +494,9 @@ def signup_user(signup_type):
                 if customer["username"] == username:
                     raise ValueError("Username already exists.")
         elif signup_type == "seller":
-            for seller in SellerEmployee.get_sellers() + SellerEmployee.get_unapproved_sellers():
+            for seller in (
+                SellerEmployee.get_sellers() + SellerEmployee.get_unapproved_sellers()
+            ):
                 if seller["username"] == username:
                     raise ValueError("Username already exists.")
 
@@ -544,7 +548,9 @@ def show_products():
         products = Product.get_approved_products()
         print(colorama.Fore.BLUE)
         for product in products:
+            print("\n---------------\n")
             print(product_from_dict(product))
+            print(get_product_reviews(product["id"]))
         print(colorama.Fore.WHITE)
 
     except ValueError as e:
@@ -801,10 +807,7 @@ def edit_product_extra_field(product):
 
     elif type(product) == Laptop:
         print(
-            "\nWhich field do you want to edit?\n"
-            "1- RAM\n"
-            "2- Storage\n"
-            "3- CPU\n"
+            "\nWhich field do you want to edit?\n" "1- RAM\n" "2- Storage\n" "3- CPU\n"
         )
         choice = input("Enter your choice:\n")
 
@@ -872,9 +875,7 @@ def make_product(seller):
 
             new_product.save()
 
-            print_successful(
-                "Product has been made and has to be approved.\n"
-            )
+            print_successful("Product has been made and has to be approved.\n")
             register_again = input("Register another?\n1- Yes\n")
             if register_again != "1":
                 break
@@ -997,7 +998,7 @@ def edit_product(seller=None):
                 product.name,
                 product.brand,
                 product.price,
-                *product.extra_fields().values()
+                *product.extra_fields().values(),
             )
 
             if edited:
@@ -1146,7 +1147,9 @@ def approve_product_or_seller(product_or_seller):
                 if again != "1":
                     break
             else:
-                print_error(f"No unapproved {product_or_seller} was found with this ID.\n")
+                print_error(
+                    f"No unapproved {product_or_seller} was found with this ID.\n"
+                )
         except ValueError as e:
             print_error(e)
 
@@ -1178,7 +1181,9 @@ def remove_seller_or_product(product_or_seller):
                 if again != "1":
                     break
             else:
-                print_error(f"No approved {product_or_seller} was found with this ID.\n")
+                print_error(
+                    f"No approved {product_or_seller} was found with this ID.\n"
+                )
         except ValueError as e:
             print_error(e)
 
@@ -1341,6 +1346,65 @@ def export_customer_or_seller(employee_type):
             print_error(e)
 
 
+def post_review(customer):
+
+    while True:
+        try:
+            print_error("enter e to exit")
+            product_id = input("please enter product id to post review on:\n")
+
+            if product_id == "e":
+                break
+            elif not product_id.isdigit():
+                print_error("Enter number for ID.")
+                continue
+
+            product_id = int(product_id)
+            product = MySQLProgramQueries.get_product_byID_query(product_id)
+
+            if product is None:
+                raise ValueError("Product not found.")
+
+            print_error("enter e to exit")
+            review = input("Enter your review:\n")
+
+            if review == "e":
+                break
+
+            successful = Product.post_review(product_id, customer.firstname, review)
+
+            if not successful:
+                print_error("Failed To do task")
+                continue
+
+            print_successful("Review posted Successfully")
+
+            again = input("Anything Else?\n1- Yes\n")
+
+            if again != "1":
+                break
+
+        except ValueError as e:
+            print_error(e)
+
+
+def get_product_reviews(product_id):
+    all_reviews = []
+    reviews = Product.find_reviews(product_id)
+
+    if not reviews:
+        return "No reviews for this product yet"
+
+    for index, review in enumerate(reviews, start=1):
+        all_reviews.append(
+            f"Review number: {index}\n"
+            f"Name: {review['name']}\n"
+            f"Review: {review['review']}\n"
+        )
+
+    unpacked_reviews = "\n".join(all_reviews)
+    return unpacked_reviews
+
 # Panels -----------------------------------------------------------------
 
 
@@ -1402,6 +1466,8 @@ def customers_Shop_panel(customer):
             case "9":
                 add_to_balance(customer)
             case "10":
+                post_review(customer)
+            case "11":
                 break
             case _:
                 print_error("Please only choose from options")
